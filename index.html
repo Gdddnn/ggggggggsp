@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="郭厶萍的个人作品集 - 新媒体内容创作者，视频制作、内容运营和视觉设计">
+    <title>郭厶萍 - 个人作品集</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&family=Fredoka:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand" data-page="about" style="cursor: pointer;">郭厶萍</div>
+            <ul class="nav-menu">
+                <li><a href="#" class="nav-link active" data-page="about">关于我</a></li>
+                <li><a href="#" class="nav-link" data-page="projects">作品</a></li>
+                <li><a href="#" class="nav-link" data-page="contact">联系</a></li>
+                <li><a href="#" class="nav-link admin-link" id="adminLoginBtn" style="display: none;">管理</a></li>
+                <li><a href="#" class="nav-link admin-link" id="adminLogoutBtn" style="display: none;">退出</a></li>
+            </ul>
+            <button class="login-btn" id="loginBtn">登录</button>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面容器 -->
+    <div class="pages-container">
+        <!-- 关于我 -->
+        <section id="about" class="page">
+            <div class="container">
+                <div class="about-content">
+                    <div class="about-hero">
+                        <div class="about-photo-wrapper">
+                            <div class="about-photo">
+                                <img id="profilePhoto" src="" alt="郭厶萍" class="profile-photo" style="display:none;">
+                                <div class="photo-placeholder" id="photoPlaceholder">
+                                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                    <span>点击上传照片</span>
+                                </div>
+                                <input type="file" id="photoUpload" accept="image/*" style="display:none;">
+                                <div class="photo-upload-overlay">
+                                    <span>更换照片</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="about-intro">
+                            <h1 class="about-name">郭厶萍</h1>
+                            <p class="about-subtitle">新媒体内容创作者</p>
+                            <p class="about-description">21岁，浙江传媒学院广播电视学专业（本科），GPA 3.98/4</p>
+                            <p class="about-description">专注于视频制作、内容运营和视觉设计。拥有丰富的新媒体运营经验，擅长运用AI技术进行创意制作，作品曾获全国大学生广告艺术大赛三等奖。</p>
+                        </div>
+                    </div>
+                    <div class="about-stats">
+                        <div class="stat-item">
+                            <div class="stat-icon">🎓</div>
+                            <div class="stat-number" data-target="3.98">0</div>
+                            <div class="stat-label">GPA成绩</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">🏆</div>
+                            <div class="stat-number">国三</div>
+                            <div class="stat-label">大广赛获奖</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">⭐</div>
+                            <div class="stat-number" data-target="2">0</div>
+                            <div class="stat-label">十佳大学生</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 工作经历时间线 -->
+                    <div class="timeline-section">
+                        <h3 class="timeline-title">工作经历</h3>
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-date">2025.05 - 2025.09</div>
+                                    <div class="timeline-company">杭州鼎文学校</div>
+                                    <div class="timeline-position">内容编导</div>
+                                    <p class="timeline-description">负责学校品牌宣传视频的策划与编导，从选题、脚本撰写到拍摄现场调度全流程参与；协调摄像与后期团队，把控成片节奏与风格；产出多条招生宣传片及活动纪实视频，用于官网与社交媒体投放。</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-date">2024.09 - 2025.01</div>
+                                    <div class="timeline-company">苹果有限公司</div>
+                                    <div class="timeline-position">校园大使（用户运营）</div>
+                                    <p class="timeline-description">在高校内开展苹果产品体验与用户运营，策划并执行线下体验活动、工作坊；负责校园社群维护与内容输出，收集用户反馈并配合品牌活动落地；协助新品推广与校园渠道拓展。</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-date">2024.06 - 2024.09</div>
+                                    <div class="timeline-company">漳州市应急管理局</div>
+                                    <div class="timeline-position">内容运营</div>
+                                    <p class="timeline-description">参与应急科普与政务新媒体内容策划与制作，撰写安全知识、政策解读等推文与短视频脚本；配合防灾减灾宣传节点产出图文与视频内容，提升公众号与短视频账号的传播与互动效果。</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-date">2023.03 - 2023.12</div>
+                                    <div class="timeline-company">浩静花园（上海）文化有限公司</div>
+                                    <div class="timeline-position">新媒体运营</div>
+                                    <p class="timeline-description">独立负责公司多平台新媒体账号的日常运营，包括公众号、小红书、抖音等；完成选题策划、文案撰写、图片与短视频拍摄剪辑及发布；通过数据分析优化内容与发布节奏，参与品牌活动与直播策划执行。</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 添加工作经验按钮 -->
+                        <div style="text-align: center; margin-top: 2rem;">
+                            <button id="addExperienceBtn" class="btn btn-primary">添加工作经验 ➕</button>
+                        </div>
+                    </div>
+
+                    <!-- 技能板块 -->
+                    <div class="skills-section" style="margin-top: 3rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3 class="timeline-title">技能</h3>
+                            <button id="addSkillBtn" class="btn btn-primary">添加技能 ➕</button>
+                        </div>
+                        <div class="skills-grid" id="skillsGrid">
+                            <div class="skill-card">
+                                <div class="skill-icon">✂️</div>
+                                <h3 class="skill-title">视频剪辑</h3>
+                                <p class="skill-description">剪映、PR、达芬奇</p>
+                                <div class="skill-stars">⭐⭐⭐⭐⭐</div>
+                            </div>
+                            <div class="skill-card">
+                                <div class="skill-icon">🎨</div>
+                                <h3 class="skill-title">美编排版</h3>
+                                <p class="skill-description">PS、AI、ID、Canva</p>
+                                <div class="skill-stars">⭐⭐⭐⭐⭐</div>
+                            </div>
+                            <div class="skill-card">
+                                <div class="skill-icon">🤖</div>
+                                <h3 class="skill-title">AI技术应用</h3>
+                                <p class="skill-description">可灵、即梦、豆包、通义、海螺、Sora</p>
+                                <div class="skill-stars">⭐⭐⭐⭐⭐</div>
+                            </div>
+                            <div class="skill-card">
+                                <div class="skill-icon">📊</div>
+                                <h3 class="skill-title">数据分析</h3>
+                                <p class="skill-description">MySQL、数据运营分析</p>
+                                <div class="skill-stars">⭐⭐⭐⭐</div>
+                            </div>
+                            <div class="skill-card">
+                                <div class="skill-icon">📝</div>
+                                <h3 class="skill-title">内容运营</h3>
+                                <p class="skill-description">公众号、视频号、社群运营</p>
+                                <div class="skill-stars">⭐⭐⭐⭐⭐</div>
+                            </div>
+                            <div class="skill-card">
+                                <div class="skill-icon">💼</div>
+                                <h3 class="skill-title">办公软件</h3>
+                                <p class="skill-description">Word、Excel、PPT</p>
+                                <div class="skill-stars">⭐⭐⭐⭐⭐</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+
+        <!-- 作品展示 -->
+        <section id="projects" class="page active">
+            <div class="container">
+                <h2 class="section-title">作品</h2>
+                <p id="dragHint" style="color: var(--text-secondary); margin-bottom: 2rem; display: none;">提示：可以通过拖拽调整作品卡片的顺序</p>
+                <div class="projects-grid" id="projectsGrid">
+                    <div class="project-card">
+                        <div class="project-badge">🤖 AI</div>
+                        <div class="project-image">
+                            <div class="project-emoji">✨</div>
+                        </div>
+                        <div class="project-content">
+                            <h3 class="project-title">AI作品合集</h3>
+                            <p class="project-description">运用多种AI工具进行创意制作，包括可灵、即梦、豆包、通义、海螺、Sora等。涵盖视频生成、图像创作、文案优化等多个领域。通过AI技术提升创作效率，探索AI与内容创作的创新结合，产出高质量的数字媒体作品。</p>
+                            <div class="project-tags">
+                                <span class="tag">AI生成</span>
+                                <span class="tag">创意制作</span>
+                                <span class="tag">数字媒体</span>
+                            </div>
+                            <button class="project-btn" data-project-id="ai-works">查看详情 👀</button>
+                        </div>
+                    </div>
+                    <div class="project-card">
+                        <div class="project-badge">🏆 国三</div>
+                        <div class="project-image">
+                            <div class="project-emoji">🎬</div>
+                        </div>
+                        <div class="project-content">
+                            <h3 class="project-title">大广赛作品《丹媚在，没意外》</h3>
+                            <p class="project-description">作为负责人和导演，统筹项目全流程，组建团队并制定执行计划。主导创意构思与脚本撰写，运用AI技术（可灵、即梦、豆包、通义、海螺、Sora）完成成片制作，把控作品风格与质量。作品获全国大学生广告艺术大赛三等奖。</p>
+                            <div class="project-tags">
+                                <span class="tag">AI制作</span>
+                                <span class="tag">视频剪辑</span>
+                                <span class="tag">广告创意</span>
+                            </div>
+                            <button class="project-btn" data-project-id="danmei">查看详情 👀</button>
+                        </div>
+                    </div>
+                    <div class="project-card">
+                        <div class="project-badge">NEW</div>
+                        <div class="project-image">
+                            <div class="project-emoji">🎥</div>
+                        </div>
+                        <div class="project-content">
+                            <h3 class="project-title">毕业联合作品《万物生》</h3>
+                            <p class="project-description">担任负责人/导演/摄像，统筹项目全流程，牵头组建跨专业创作团队，制定执行计划与分工。同时对接学校推进项目申报与合约签订。成功推动项目获校级立项并与学校签订合作合约，获得专项支持。</p>
+                            <div class="project-tags">
+                                <span class="tag">导演</span>
+                                <span class="tag">摄像</span>
+                                <span class="tag">项目管理</span>
+                            </div>
+                            <button class="project-btn" data-project-id="wansheng">查看详情 👀</button>
+                        </div>
+                    </div>
+                    <div class="project-card">
+                        <div class="project-badge">HOT</div>
+                        <div class="project-image">
+                            <div class="project-emoji">📱</div>
+                        </div>
+                        <div class="project-content">
+                            <h3 class="project-title">自媒体运营｜果蔬瓶🍎</h3>
+                            <p class="project-description">负责账号内容策划、拍摄剪辑与平台运营，担任导演/拍摄/剪辑/出镜。通过后台数据分析，优化标题/标签提升曝光。同期策划并拍摄品牌广告内容。成果：一周内粉丝破千，小红书均浏览2k+、抖音均浏览10w+；广告获小红书1w+浏览/5k+点赞、抖音100w+浏览。</p>
+                            <div class="project-tags">
+                                <span class="tag">自媒体</span>
+                                <span class="tag">内容运营</span>
+                                <span class="tag">短视频</span>
+                            </div>
+                            <button class="project-btn" data-project-id="guoshu">查看详情 👀</button>
+                        </div>
+                    </div>
+                    <div class="project-card">
+                        <div class="project-image">
+                            <div class="project-emoji">📰</div>
+                        </div>
+                        <div class="project-content">
+                            <h3 class="project-title">教授助理工作</h3>
+                            <p class="project-description">协助教授开展学术研究，负责选题调研、资料筛选核查、文章逻辑框架搭建及初稿撰写；多篇文章成功发表于国家级刊物《中国报道》。主导《华人世界》杂志封面创意设计、内页版面排版，统筹视觉风格统一。</p>
+                            <div class="project-tags">
+                                <span class="tag">学术研究</span>
+                                <span class="tag">视觉设计</span>
+                                <span class="tag">期刊编辑</span>
+                            </div>
+                            <button class="project-btn" data-project-id="professor">查看详情 👀</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 联系方式 -->
+        <section id="contact" class="page">
+            <div class="container">
+                <h2 class="section-title">联系</h2>
+                <div class="contact-content">
+                    <div class="contact-info">
+                        <p class="contact-text" id="contactText">如果你对我的作品感兴趣，或者想要合作，欢迎随时联系我。</p>
+                        <div class="contact-links">
+                            <a href="mailto:1763591775@qq.com" class="contact-link">
+                                <span>1763591775@qq.com</span>
+                            </a>
+                            <a href="tel:18868740503" class="contact-link">
+                                <span>18868740503</span>
+                            </a>
+                            <a href="https://www.canva.cn/design/DAGvv_NlNaU/SSDchMn_22mun2KZk1qEDw/view?utm_content=DAGvv_NlNaU&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=hd887646f01" class="contact-link" target="_blank">
+                                <span>作品集链接</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="contact-qr" style="display: flex; flex-direction: column; align-items: center;">
+                        <h3 style="text-align: center; margin-bottom: 1.5rem; color: var(--primary-blue);">扫码联系</h3>
+                        <div class="qr-container" id="qrContainer" style="display: inline-block; margin: 0 0 1.5rem; border: 2px solid var(--border-color); border-radius: 12px; overflow: hidden; max-width: 250px; max-height: 250px;">
+                            <div id="qrPlaceholder" style="width: 180px; height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-secondary);">
+                                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                                <span style="margin-top: 1rem; color: var(--text-secondary);">点击上传二维码</span>
+                            </div>
+                            <img id="qrCode" src="" alt="二维码" style="display: none; max-width: 250px; max-height: 250px; width: auto; height: auto;">
+                            <input type="file" id="qrUpload" accept="image/*" style="display:none;">
+                        </div>
+                        <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                            <button id="uploadQrBtn" class="btn btn-primary">上传二维码 📤</button>
+                            <button id="editContactTextBtn" class="btn" style="background: var(--accent-yellow); color: var(--text-primary);">编辑联系文字 ✏️</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 郭厶萍</p>
+        </div>
+    </footer>
+
+    <!-- 页面切换指示器 -->
+    <div class="page-indicator">
+        <div class="indicator-dot active" data-page="about"></div>
+        <div class="indicator-dot" data-page="projects"></div>
+        <div class="indicator-dot" data-page="contact"></div>
+    </div>
+
+    <!-- 作品详情模态框 -->
+    <div id="projectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">作品详情</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="project-detail-info" id="projectDetailInfo">
+                    <!-- 项目信息将动态填充 -->
+                </div>
+                
+                <!-- 已上传的媒体展示区 -->
+                <div class="media-gallery" id="mediaGallery">
+                    <h3>📸 作品展示</h3>
+                    <div class="gallery-grid" id="galleryGrid">
+                        <!-- 上传的图片和视频将显示在这里 -->
+                    </div>
+                </div>
+
+                <!-- 文件上传区域（仅登录后显示） -->
+                <div class="upload-section admin-only" style="display: none;">
+                    <h3>📤 上传作品</h3>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📁</div>
+                        <p class="upload-text">点击或拖拽文件到此处上传</p>
+                        <p class="upload-hint">支持图片（JPG、PNG、GIF）和视频（MP4、MOV、AVI）<br>可同时选择多个文件上传<br><small style="color: var(--text-secondary);">图片会自动压缩，视频保持原始画质和音频（不压缩）</small></p>
+                        <input type="file" id="fileInput" multiple accept="image/*,video/*" style="display: none;">
+                        <button class="upload-btn" id="uploadBtn">选择文件（可多选）</button>
+                    </div>
+                    <div class="upload-progress" id="uploadProgress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <p class="progress-text" id="progressText">上传中...</p>
+                    </div>
+                </div>
+                <div class="not-logged-in-message" style="text-align: center; padding: 2rem; color: var(--text-secondary); display: none;">
+                    <p>🔒 此功能需要管理员登录</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全屏预览模态框 -->
+    <div id="previewModal" class="modal preview-modal">
+        <div class="preview-container">
+            <span class="preview-close">&times;</span>
+            <button class="preview-nav preview-prev" id="previewPrev">‹</button>
+            <button class="preview-nav preview-next" id="previewNext">›</button>
+            <div class="preview-content" id="previewContent">
+                <!-- 预览内容将动态填充 -->
+            </div>
+            <div class="preview-info" id="previewInfo">
+                <span class="preview-counter" id="previewCounter"></span>
+                <span class="preview-name" id="previewName"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 登录模态框 -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content login-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">后台登录</h2>
+                <span class="modal-close login-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="loginForm" class="login-form">
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" id="loginPassword" class="form-input" placeholder="请输入管理密码" required autocomplete="off">
+                    </div>
+                    <div id="loginError" class="login-error" style="display: none;"></div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">登录</button>
+                </form>
+                <div class="login-hint">
+                    <p>提示：这是管理后台，只有授权用户才能访问</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加工作经验模态框 -->
+    <div id="experienceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">添加工作经验</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="experienceForm" class="login-form">
+                    <div class="form-group">
+                        <label>工作时间</label>
+                        <input type="text" id="experienceDate" class="form-input" placeholder="例如：2024.01 - 2024.12" required>
+                    </div>
+                    <div class="form-group">
+                        <label>公司名称</label>
+                        <input type="text" id="experienceCompany" class="form-input" placeholder="请输入公司名称" required>
+                    </div>
+                    <div class="form-group">
+                        <label>职位</label>
+                        <input type="text" id="experiencePosition" class="form-input" placeholder="请输入职位" required>
+                    </div>
+                    <div class="form-group">
+                        <label>工作描述</label>
+                        <textarea id="experienceDescription" class="form-input form-textarea" placeholder="请输入工作描述" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">保存工作经验 💾</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑联系文字模态框 -->
+    <div id="contactTextModal" class="modal">
+        <div class="modal-content login-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">编辑联系文字</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="contactTextForm" class="login-form">
+                    <div class="form-group">
+                        <label>联系文字</label>
+                        <textarea id="contactTextInput" class="form-input form-textarea" placeholder="请输入联系文字" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">保存文字 💾</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑技能模态框 -->
+    <div id="skillModal" class="modal">
+        <div class="modal-content login-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">编辑技能</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="skillForm" class="login-form">
+                    <div class="form-group">
+                        <label>技能图标</label>
+                        <input type="text" id="skillIcon" class="form-input" placeholder="输入一个emoji，例如：✂️" required>
+                    </div>
+                    <div class="form-group">
+                        <label>技能名称</label>
+                        <input type="text" id="skillTitle" class="form-input" placeholder="请输入技能名称" required>
+                    </div>
+                    <div class="form-group">
+                        <label>技能描述</label>
+                        <textarea id="skillDescription" class="form-input form-textarea" placeholder="请输入技能描述" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>技能星级</label>
+                        <select id="skillStars" class="form-input" required>
+                            <option value="1">⭐</option>
+                            <option value="2">⭐⭐</option>
+                            <option value="3">⭐⭐⭐</option>
+                            <option value="4">⭐⭐⭐⭐</option>
+                            <option value="5">⭐⭐⭐⭐⭐</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">保存技能 💾</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑作品图标模态框 -->
+    <div id="emojiModal" class="modal">
+        <div class="modal-content login-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">编辑作品图标</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="emojiForm" class="login-form">
+                    <div class="form-group">
+                        <label>作品图标</label>
+                        <input type="text" id="emojiInput" class="form-input" placeholder="输入一个emoji，例如：✨" required>
+                    </div>
+                    <div class="form-group">
+                        <label>常用图标</label>
+                        <div class="emoji-grid">
+                            <span class="emoji-option">✨</span>
+                            <span class="emoji-option">🎬</span>
+                            <span class="emoji-option">🎥</span>
+                            <span class="emoji-option">📱</span>
+                            <span class="emoji-option">📰</span>
+                            <span class="emoji-option">🎨</span>
+                            <span class="emoji-option">🎯</span>
+                            <span class="emoji-option">💡</span>
+                            <span class="emoji-option">🌟</span>
+                            <span class="emoji-option">🔥</span>
+                            <span class="emoji-option">💎</span>
+                            <span class="emoji-option">📸</span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">保存图标 💾</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑导航文字模态框 -->
+    <div id="navModal" class="modal">
+        <div class="modal-content login-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">编辑导航文字</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="navForm" class="login-form">
+                    <div class="form-group">
+                        <label>品牌名称</label>
+                        <input type="text" id="brandNameInput" class="form-input" placeholder="请输入品牌名称" required>
+                    </div>
+                    <div class="form-group">
+                        <label>关于我</label>
+                        <input type="text" id="aboutNavInput" class="form-input" placeholder="请输入关于我导航文字" required>
+                    </div>
+                    <div class="form-group">
+                        <label>作品</label>
+                        <input type="text" id="projectsNavInput" class="form-input" placeholder="请输入作品导航文字" required>
+                    </div>
+                    <div class="form-group">
+                        <label>联系</label>
+                        <input type="text" id="contactNavInput" class="form-input" placeholder="请输入联系导航文字" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">保存导航文字 💾</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 小玩偶苹果元素 -->
+    <div id="appleDoll" style="position: fixed; top: 0; left: 0; font-size: 2rem; pointer-events: none; z-index: 9999; display: none;">🍎</div>
+
+    <script src="script.js"></script>
+</body>
+</html>
