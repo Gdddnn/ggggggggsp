@@ -1,0 +1,10 @@
+如何添加照片：
+
+1. 在项目文件夹中创建名为 "assets" 的文件夹
+2. 将你的照片文件命名为 "photo.png" 
+3. 将照片文件放到 assets 文件夹中
+4. 照片路径应该是：assets/photo.png
+
+如果照片文件名不同，可以修改 index.html 第 40 行的路径。
+
+支持的图片格式：PNG, JPG, JPEG
