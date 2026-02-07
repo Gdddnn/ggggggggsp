@@ -4354,3 +4354,1058 @@ document.addEventListener('DOMContentLoaded', () => {
         addNavEditButton();
     }
 });
+
+// ========== 工作经历卡片书签系统 ==========
+(function() {
+    // 每个工作经历的书签数据
+    const expBookmarksData = new Map();
+    let activeExpBookmark = { expIndex: null, bookmarkIndex: null };
+    
+    // 获取登录状态
+    function getLoginStatus() {
+        return window.isLoggedIn && typeof window.isLoggedIn === 'function' ? window.isLoggedIn() : false;
+    }
+    
+    // 从localStorage加载工作经历书签
+    function loadExpBookmarks() {
+        try {
+            const saved = localStorage.getItem('expBookmarks');
+            if (saved) {
+                const data = JSON.parse(saved);
+                Object.keys(data).forEach(key => {
+                    expBookmarksData.set(parseInt(key), data[key]);
+                });
+            }
+        } catch (error) {
+            console.error('加载工作经历书签失败:', error);
+        }
+    }
+    
+    // 保存工作经历书签到localStorage
+    function saveExpBookmarks() {
+        try {
+            const data = {};
+            expBookmarksData.forEach((value, key) => {
+                data[key] = value;
+            });
+            localStorage.setItem('expBookmarks', JSON.stringify(data));
+        } catch (error) {
+            console.error('保存工作经历书签失败:', error);
+        }
+    }
+    
+    // 获取工作经历的书签
+    function getExpBookmarks(expIndex) {
+        if (!expBookmarksData.has(expIndex)) {
+            // 默认书签
+            expBookmarksData.set(expIndex, [
+                { id: Date.now(), title: '详情', content: '点击编辑详情内容...\n\n您可以在这里添加工作经历的详细说明，支持换行排版。' }
+            ]);
+        }
+        return expBookmarksData.get(expIndex);
+    }
+    
+    // 渲染工作经历的书签
+    function renderExpBookmarks(expIndex) {
+        const tabsContainer = document.getElementById(`expBookmarkTabs-${expIndex}`);
+        const panel = document.getElementById(`expBookmarkPanel-${expIndex}`);
+        const bodyContainer = document.getElementById(`expBookmarkBody-${expIndex}`);
+        
+        console.log(`渲染工作经历 ${expIndex} 的书签:`, { tabsContainer: !!tabsContainer, panel: !!panel, bodyContainer: !!bodyContainer });
+        
+        if (!tabsContainer || !panel || !bodyContainer) {
+            console.warn(`工作经历 ${expIndex} 的书签容器未找到`);
+            return;
+        }
+        
+        const bookmarks = getExpBookmarks(expIndex);
+        const isActive = activeExpBookmark.expIndex === expIndex;
+        const activeBookmarkIdx = isActive ? activeExpBookmark.bookmarkIndex : -1;
+        
+        // 渲染标签
+        tabsContainer.innerHTML = '';
+        bookmarks.forEach((bookmark, index) => {
+            const tab = document.createElement('div');
+            tab.className = `exp-bookmark-tab ${isActive && index === activeBookmarkIdx ? 'active' : ''}`;
+            tab.innerHTML = `
+                <span>${bookmark.title}</span>
+                ${getLoginStatus() ? `
+                    <button class="edit-tab-btn" title="编辑名称">✏️</button>
+                    <button class="delete-tab-btn" title="删除">🗑️</button>
+                ` : ''}
+            `;
+            
+            // 点击标签展开面板
+            tab.addEventListener('click', (e) => {
+                if (e.target.classList.contains('edit-tab-btn')) {
+                    e.stopPropagation();
+                    editExpBookmarkTitle(expIndex, index);
+                } else if (e.target.classList.contains('delete-tab-btn')) {
+                    e.stopPropagation();
+                    deleteExpBookmark(expIndex, index);
+                } else {
+                    openExpBookmarkPanel(expIndex, index);
+                }
+            });
+            
+            tabsContainer.appendChild(tab);
+        });
+        
+        // 添加"+"按钮
+        if (getLoginStatus()) {
+            const addBtn = document.createElement('div');
+            addBtn.className = 'exp-bookmark-add';
+            addBtn.innerHTML = '<span>+</span>';
+            addBtn.title = '添加书签';
+            addBtn.addEventListener('click', () => addExpBookmark(expIndex));
+            tabsContainer.appendChild(addBtn);
+        }
+        
+        // 激活或关闭容器
+        const container = panel.closest('.exp-bookmark-container');
+        if (isActive && activeBookmarkIdx >= 0 && bookmarks[activeBookmarkIdx]) {
+            if (container) {
+                container.classList.add('active');
+            }
+            const bookmark = bookmarks[activeBookmarkIdx];
+            bodyContainer.innerHTML = `
+                <h5>${bookmark.title}</h5>
+                <div class="exp-bookmark-body-content" id="expBookmarkContent-${expIndex}-${activeBookmarkIdx}">
+                    ${getLoginStatus() ? '<span class="edit-hint">点击编辑</span>' : ''}
+                    ${bookmark.content}
+                </div>
+            `;
+            
+            // 绑定编辑事件
+            if (getLoginStatus()) {
+                const contentEl = document.getElementById(`expBookmarkContent-${expIndex}-${activeBookmarkIdx}`);
+                contentEl.addEventListener('click', () => {
+                    editExpBookmarkContent(expIndex, activeBookmarkIdx);
+                });
+            }
+            
+            panel.classList.add('open');
+        } else {
+            if (container) {
+                container.classList.remove('active');
+            }
+            panel.classList.remove('open');
+        }
+    }
+    
+    // 打开书签面板
+    function openExpBookmarkPanel(expIndex, bookmarkIndex) {
+        if (activeExpBookmark.expIndex === expIndex && activeExpBookmark.bookmarkIndex === bookmarkIndex) {
+            // 如果点击已打开的书签，则关闭
+            closeExpBookmarkPanel();
+        } else {
+            activeExpBookmark = { expIndex, bookmarkIndex };
+            // 关闭其他所有面板
+            document.querySelectorAll('.exp-bookmark-panel').forEach(p => p.classList.remove('open'));
+            document.querySelectorAll('.exp-bookmark-container').forEach(c => c.classList.remove('active'));
+            renderExpBookmarks(expIndex);
+        }
+    }
+    
+    // 关闭书签面板
+    function closeExpBookmarkPanel() {
+        activeExpBookmark = { expIndex: null, bookmarkIndex: null };
+        document.querySelectorAll('.exp-bookmark-panel').forEach(p => p.classList.remove('open'));
+        document.querySelectorAll('.exp-bookmark-container').forEach(c => c.classList.remove('active'));
+        // 重新渲染所有工作经历的书签标签状态
+        document.querySelectorAll('.timeline-item').forEach(item => {
+            const expIndex = parseInt(item.dataset.experienceIndex);
+            if (!isNaN(expIndex)) {
+                renderExpBookmarks(expIndex);
+            }
+        });
+    }
+    
+    // 添加书签
+    function addExpBookmark(expIndex) {
+        if (!isLoggedIn) {
+            alert('请先登录后再添加书签！');
+            return;
+        }
+        
+        const bookmarks = getExpBookmarks(expIndex);
+        const newBookmark = {
+            id: Date.now(),
+            title: `书签${bookmarks.length + 1}`,
+            content: '点击编辑内容...\n\n在这里输入详细内容。'
+        };
+        bookmarks.push(newBookmark);
+        saveExpBookmarks();
+        renderExpBookmarks(expIndex);
+        // 自动打开新书签
+        openExpBookmarkPanel(expIndex, bookmarks.length - 1);
+    }
+    
+    // 删除书签
+    function deleteExpBookmark(expIndex, bookmarkIndex) {
+        if (!getLoginStatus()) return;
+        
+        const bookmarks = getExpBookmarks(expIndex);
+        if (confirm(`确定要删除"${bookmarks[bookmarkIndex].title}"吗？`)) {
+            bookmarks.splice(bookmarkIndex, 1);
+            saveExpBookmarks();
+            
+            // 如果删除的是当前打开的书签，关闭面板
+            if (activeExpBookmark.expIndex === expIndex && activeExpBookmark.bookmarkIndex === bookmarkIndex) {
+                closeExpBookmarkPanel();
+            } else {
+                renderExpBookmarks(expIndex);
+            }
+        }
+    }
+    
+    // 编辑书签标题
+    function editExpBookmarkTitle(expIndex, bookmarkIndex) {
+        if (!getLoginStatus()) return;
+        
+        const bookmarks = getExpBookmarks(expIndex);
+        const newTitle = prompt('请输入新的书签名称:', bookmarks[bookmarkIndex].title);
+        if (newTitle && newTitle.trim()) {
+            bookmarks[bookmarkIndex].title = newTitle.trim();
+            saveExpBookmarks();
+            renderExpBookmarks(expIndex);
+        }
+    }
+    
+    // 编辑书签内容
+    function editExpBookmarkContent(expIndex, bookmarkIndex) {
+        if (!getLoginStatus()) return;
+        
+        const bookmarks = getExpBookmarks(expIndex);
+        const bookmark = bookmarks[bookmarkIndex];
+        const bodyContainer = document.getElementById(`expBookmarkBody-${expIndex}`);
+        
+        bodyContainer.innerHTML = `
+            <h5>${bookmark.title}</h5>
+            <div class="exp-bookmark-edit-mode">
+                <textarea id="expBookmarkEditText-${expIndex}">${bookmark.content}</textarea>
+                <div class="exp-bookmark-edit-actions">
+                    <button class="exp-bookmark-cancel-btn" onclick="cancelExpBookmarkEdit(${expIndex})">取消</button>
+                    <button class="exp-bookmark-save-btn" onclick="saveExpBookmarkEdit(${expIndex}, ${bookmarkIndex})">保存</button>
+                </div>
+            </div>
+        `;
+        
+        // 自动调整高度
+        const textarea = document.getElementById(`expBookmarkEditText-${expIndex}`);
+        textarea.style.height = textarea.scrollHeight + 'px';
+        textarea.focus();
+    }
+    
+    // 保存编辑（暴露到全局）
+    window.saveExpBookmarkEdit = function(expIndex, bookmarkIndex) {
+        const textarea = document.getElementById(`expBookmarkEditText-${expIndex}`);
+        if (textarea) {
+            const bookmarks = getExpBookmarks(expIndex);
+            bookmarks[bookmarkIndex].content = textarea.value;
+            saveExpBookmarks();
+            renderExpBookmarks(expIndex);
+        }
+    };
+    
+    // 取消编辑（暴露到全局）
+    window.cancelExpBookmarkEdit = function(expIndex) {
+        renderExpBookmarks(expIndex);
+    };
+    
+    // 初始化工作经历书签
+    function initExpBookmarks() {
+        loadExpBookmarks();
+        
+        console.log('初始化工作经历书签...');
+        
+        // 为每个工作经历渲染书签
+        document.querySelectorAll('.timeline-item').forEach(item => {
+            const expIndex = parseInt(item.dataset.experienceIndex);
+            console.log('工作经历索引:', expIndex);
+            if (!isNaN(expIndex)) {
+                renderExpBookmarks(expIndex);
+                
+                // 绑定关闭按钮
+                const closeBtn = item.querySelector('.exp-bookmark-close');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', closeExpBookmarkPanel);
+                }
+            }
+        });
+    }
+    
+    // 页面加载完成后初始化
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initExpBookmarks);
+    } else {
+        initExpBookmarks();
+    }
+    
+    // 监听登录状态变化
+    const expBookmarkOriginalUpdateUIForLogin = window.updateUIForLogin;
+    window.updateUIForLogin = function() {
+        if (expBookmarkOriginalUpdateUIForLogin) expBookmarkOriginalUpdateUIForLogin();
+        setTimeout(initExpBookmarks, 100);
+    };
+    
+    const expBookmarkOriginalUpdateUIForLogout = window.updateUIForLogout;
+    window.updateUIForLogout = function() {
+        if (expBookmarkOriginalUpdateUIForLogout) expBookmarkOriginalUpdateUIForLogout();
+        setTimeout(initExpBookmarks, 100);
+    };
+})();
+
+// ========== 文字直接编辑功能（支持换行） ==========
+(function() {
+    // 可编辑的文字类名列表
+    const editableClasses = [
+        'about-description',
+        'timeline-description', 
+        'skill-description',
+        'project-description',
+        'contact-text'
+    ];
+    
+    let currentEditingElement = null;
+    let currentTextarea = null;
+    
+    // 从localStorage加载保存的文字
+    function loadSavedText(element) {
+        const key = 'text_' + element.className + '_' + getElementPath(element);
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            element.textContent = saved;
+        }
+    }
+    
+    // 保存文字到localStorage
+    function saveText(element, text) {
+        const key = 'text_' + element.className + '_' + getElementPath(element);
+        localStorage.setItem(key, text);
+    }
+    
+    // 获取元素路径（用于唯一标识）
+    function getElementPath(element) {
+        let path = '';
+        let current = element;
+        while (current && current !== document.body) {
+            const index = Array.from(current.parentElement?.children || []).indexOf(current);
+            path = current.className + '[' + index + ']' + (path ? '>' + path : '');
+            current = current.parentElement;
+        }
+        return path;
+    }
+})();
+
+// ========== 项目展示区域书签系统 ==========
+(function() {
+    // 书签数据
+    let bookmarks = [];
+    let activeBookmarkId = null;
+    
+    // 获取登录状态
+    function getLoginStatus() {
+        return window.isLoggedIn && typeof window.isLoggedIn === 'function' ? window.isLoggedIn() : false;
+    }
+    
+    // 从localStorage加载书签
+    function loadBookmarks() {
+        try {
+            const saved = localStorage.getItem('projectBookmarks');
+            if (saved) {
+                bookmarks = JSON.parse(saved);
+            } else {
+                // 默认书签
+                bookmarks = [
+                    { id: 1, title: '项目一', content: '点击编辑内容...\n\n支持多行换行排版。' },
+                    { id: 2, title: '项目二', content: '点击编辑内容...\n\n支持多行换行排版。' },
+                    { id: 3, title: '项目三', content: '点击编辑内容...\n\n支持多行换行排版。' }
+                ];
+                saveBookmarks();
+            }
+        } catch (error) {
+            console.error('加载书签失败:', error);
+            bookmarks = [];
+        }
+    }
+    
+    // 保存书签到localStorage
+    function saveBookmarks() {
+        try {
+            localStorage.setItem('projectBookmarks', JSON.stringify(bookmarks));
+        } catch (error) {
+            console.error('保存书签失败:', error);
+        }
+    }
+    
+    // 渲染书签
+    function renderBookmarks() {
+        const tabsContainer = document.querySelector('.bookmark-tabs');
+        const contentContainer = document.querySelector('.bookmark-content');
+        
+        if (!tabsContainer || !contentContainer) {
+            return;
+        }
+        
+        const isLoggedIn = getLoginStatus();
+        
+        // 渲染标签
+        tabsContainer.innerHTML = '';
+        bookmarks.forEach(bookmark => {
+            const tab = document.createElement('div');
+            tab.className = `bookmark-tab ${activeBookmarkId === bookmark.id ? 'active' : ''}`;
+            tab.setAttribute('data-bookmark', bookmark.id);
+            tab.innerHTML = `
+                <span>${bookmark.title}</span>
+                ${isLoggedIn ? `
+                    <button class="bookmark-edit-btn" title="编辑名称">✏️</button>
+                    <button class="bookmark-delete-btn" title="删除">🗑️</button>
+                ` : ''}
+            `;
+            
+            // 点击标签
+            tab.addEventListener('click', (e) => {
+                if (e.target.classList.contains('bookmark-edit-btn')) {
+                    e.stopPropagation();
+                    editBookmarkTitle(bookmark.id);
+                } else if (e.target.classList.contains('bookmark-delete-btn')) {
+                    e.stopPropagation();
+                    deleteBookmark(bookmark.id);
+                } else {
+                    activateBookmark(bookmark.id);
+                }
+            });
+            
+            tabsContainer.appendChild(tab);
+        });
+        
+        // 添加新书签按钮
+        if (isLoggedIn) {
+            const addBtn = document.createElement('div');
+            addBtn.className = 'bookmark-add';
+            addBtn.innerHTML = '<span>+</span>';
+            addBtn.title = '添加书签 ➕';
+            addBtn.addEventListener('click', addBookmark);
+            tabsContainer.appendChild(addBtn);
+        }
+        
+        // 渲染内容面板
+        contentContainer.innerHTML = '';
+        bookmarks.forEach(bookmark => {
+            const panel = document.createElement('div');
+            panel.className = `bookmark-panel ${activeBookmarkId === bookmark.id ? 'active' : ''}`;
+            panel.setAttribute('data-bookmark', bookmark.id);
+            panel.innerHTML = `
+                <h3>${bookmark.title}</h3>
+                <p>${bookmark.content}</p>
+                ${isLoggedIn ? `
+                    <button class="btn btn-primary mt-4" onclick="editBookmarkContent(${bookmark.id})">编辑内容</button>
+                ` : ''}
+            `;
+            
+            contentContainer.appendChild(panel);
+        });
+    }
+    
+    // 激活书签
+    function activateBookmark(bookmarkId) {
+        activeBookmarkId = bookmarkId;
+        renderBookmarks();
+    }
+    
+    // 添加书签
+    function addBookmark() {
+        const isLoggedIn = getLoginStatus();
+        if (!isLoggedIn) {
+            alert('请先登录才能添加书签！');
+            return;
+        }
+        
+        const newBookmark = {
+            id: Date.now(),
+            title: `项目${bookmarks.length + 1}`,
+            content: '点击编辑内容...\n\n支持多行换行排版。'
+        };
+        bookmarks.push(newBookmark);
+        saveBookmarks();
+        activateBookmark(newBookmark.id);
+    }
+    
+    // 删除书签
+    function deleteBookmark(bookmarkId) {
+        const isLoggedIn = getLoginStatus();
+        if (!isLoggedIn) {
+            alert('请先登录才能删除书签！');
+            return;
+        }
+        
+        const bookmark = bookmarks.find(b => b.id === bookmarkId);
+        if (bookmark && confirm(`确定要删除"${bookmark.title}"吗？`)) {
+            bookmarks = bookmarks.filter(b => b.id !== bookmarkId);
+            saveBookmarks();
+            activeBookmarkId = bookmarks.length > 0 ? bookmarks[0].id : null;
+            renderBookmarks();
+        }
+    }
+    
+    // 编辑书签标题
+    function editBookmarkTitle(bookmarkId) {
+        const isLoggedIn = getLoginStatus();
+        if (!isLoggedIn) {
+            alert('请先登录才能编辑书签！');
+            return;
+        }
+        
+        const bookmark = bookmarks.find(b => b.id === bookmarkId);
+        if (bookmark) {
+            const newTitle = prompt('请输入新的书签名称:', bookmark.title);
+            if (newTitle && newTitle.trim()) {
+                bookmark.title = newTitle.trim();
+                saveBookmarks();
+                renderBookmarks();
+            }
+        }
+    }
+    
+    // 编辑书签内容
+    function editBookmarkContent(bookmarkId) {
+        const isLoggedIn = getLoginStatus();
+        if (!isLoggedIn) {
+            alert('请先登录才能编辑内容！');
+            return;
+        }
+        
+        const bookmark = bookmarks.find(b => b.id === bookmarkId);
+        if (!bookmark) return;
+        
+        const panel = document.querySelector(`.bookmark-panel[data-bookmark="${bookmarkId}"]`);
+        if (!panel) return;
+        
+        panel.innerHTML = `
+            <h3>${bookmark.title}</h3>
+            <div class="bookmark-edit-mode">
+                <textarea id="bookmarkEditContent">${bookmark.content}</textarea>
+                <div class="bookmark-edit-actions">
+                    <button class="bookmark-cancel-btn" onclick="cancelBookmarkEdit(${bookmarkId})">取消</button>
+                    <button class="bookmark-save-btn" onclick="saveBookmarkEdit(${bookmarkId})">保存</button>
+                </div>
+            </div>
+        `;
+        
+        // 自动调整高度
+        const textarea = document.getElementById('bookmarkEditContent');
+        textarea.style.height = textarea.scrollHeight + 'px';
+        textarea.focus();
+    }
+    
+    // 保存书签编辑
+    window.saveBookmarkEdit = function(bookmarkId) {
+        const isLoggedIn = getLoginStatus();
+        if (!isLoggedIn) {
+            alert('请先登录才能保存编辑！');
+            renderBookmarks();
+            return;
+        }
+        
+        const textarea = document.getElementById('bookmarkEditContent');
+        if (!textarea) return;
+        
+        const bookmark = bookmarks.find(b => b.id === bookmarkId);
+        if (bookmark) {
+            bookmark.content = textarea.value;
+            saveBookmarks();
+            renderBookmarks();
+        }
+    };
+    
+    // 取消书签编辑
+    window.cancelBookmarkEdit = function(bookmarkId) {
+        renderBookmarks();
+    };
+    
+    // 初始化书签系统
+    function initBookmarks() {
+        loadBookmarks();
+        if (bookmarks.length > 0) {
+            activeBookmarkId = bookmarks[0].id;
+        }
+        renderBookmarks();
+    }
+    
+    // 页面加载完成后初始化
+    function initAfterLoginSystem() {
+        // 确保登录系统已经初始化
+        if (window.isLoggedIn && typeof window.isLoggedIn === 'function') {
+            initBookmarks();
+        } else {
+            // 如果登录系统还未初始化，延迟执行
+            setTimeout(initAfterLoginSystem, 100);
+        }
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAfterLoginSystem);
+    } else {
+        initAfterLoginSystem();
+    }
+    
+    // 监听登录状态变化
+    const originalUpdateUIForLogin = window.updateUIForLogin;
+    window.updateUIForLogin = function() {
+        if (originalUpdateUIForLogin) originalUpdateUIForLogin();
+        setTimeout(initBookmarks, 100);
+    };
+    
+    const originalUpdateUIForLogout = window.updateUIForLogout;
+    window.updateUIForLogout = function() {
+        if (originalUpdateUIForLogout) originalUpdateUIForLogout();
+        setTimeout(initBookmarks, 100);
+    };
+    
+    // 导出函数供全局使用
+    window.editBookmarkContent = editBookmarkContent;
+    window.saveBookmarkEdit = window.saveBookmarkEdit;
+    window.cancelBookmarkEdit = window.cancelBookmarkEdit;
+})();
+
+// ========== 文字直接编辑功能（支持换行） ==========
+(function() {
+    // 可编辑的文字类名列表
+    const editableClasses = [
+        'about-description',
+        'timeline-description', 
+        'skill-description',
+        'project-description',
+        'contact-text'
+    ];
+    
+    let currentEditingElement = null;
+    let currentTextarea = null;
+    
+    // 从localStorage加载保存的文字
+    function loadSavedText(element) {
+        const key = 'text_' + element.className + '_' + getElementPath(element);
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            element.textContent = saved;
+        }
+    }
+    
+    // 保存文字到localStorage
+    function saveText(element, text) {
+        const key = 'text_' + element.className + '_' + getElementPath(element);
+        localStorage.setItem(key, text);
+    }
+    
+    // 获取元素路径（用于唯一标识）
+    function getElementPath(element) {
+        let path = '';
+        let current = element;
+        while (current && current !== document.body) {
+            const index = Array.from(current.parentElement?.children || []).indexOf(current);
+            path = current.className + '[' + index + ']' + (path ? '>' + path : '');
+            current = current.parentElement;
+        }
+        return path;
+    }
+    
+    // 创建编辑按钮
+    function createEditButton(element) {
+        const btn = document.createElement('button');
+        btn.className = 'inline-edit-btn';
+        btn.innerHTML = '✏️';
+        btn.title = '点击编辑文字（支持换行）';
+        btn.style.cssText = `
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--primary-blue);
+            color: white;
+            border: 2px solid white;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 100;
+        `;
+        
+        // 鼠标悬停显示按钮
+        element.style.position = 'relative';
+        element.addEventListener('mouseenter', () => {
+            if (isLoggedIn && currentEditingElement !== element) {
+                btn.style.opacity = '1';
+            }
+        });
+        element.addEventListener('mouseleave', () => {
+            btn.style.opacity = '0';
+        });
+        
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startEditing(element);
+        });
+        
+        element.appendChild(btn);
+        return btn;
+    }
+    
+    // 开始编辑
+    function startEditing(element) {
+        if (currentEditingElement) {
+            finishEditing();
+        }
+        
+        currentEditingElement = element;
+        const originalText = element.childNodes[0]?.textContent || element.textContent;
+        
+        // 隐藏编辑按钮
+        const editBtn = element.querySelector('.inline-edit-btn');
+        if (editBtn) editBtn.style.display = 'none';
+        
+        // 创建textarea
+        const textarea = document.createElement('textarea');
+        textarea.value = originalText;
+        textarea.style.cssText = `
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 2px solid var(--primary-blue);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: inherit;
+            line-height: inherit;
+            color: inherit;
+            background: white;
+            resize: vertical;
+            outline: none;
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+        `;
+        
+        // 清除元素内容并添加textarea
+        element.textContent = '';
+        element.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        currentTextarea = textarea;
+        
+        // 自动调整高度
+        function adjustHeight() {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+        adjustHeight();
+        textarea.addEventListener('input', adjustHeight);
+        
+        // 点击外部保存
+        function handleClickOutside(e) {
+            if (!element.contains(e.target)) {
+                finishEditing();
+                document.removeEventListener('click', handleClickOutside);
+            }
+        }
+        setTimeout(() => {
+            document.addEventListener('click', handleClickOutside);
+        }, 100);
+        
+        // ESC键保存
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                finishEditing();
+                document.removeEventListener('click', handleClickOutside);
+            }
+        });
+    }
+    
+    // 结束编辑
+    function finishEditing() {
+        if (!currentEditingElement || !currentTextarea) return;
+        
+        const newText = currentTextarea.value;
+        const element = currentEditingElement;
+        
+        // 保存到localStorage
+        saveText(element, newText);
+        
+        // 恢复显示
+        element.textContent = newText;
+        
+        // 重新创建编辑按钮
+        createEditButton(element);
+        
+        currentEditingElement = null;
+        currentTextarea = null;
+    }
+    
+    // 初始化所有可编辑文字
+    function initEditableText() {
+        if (!isLoggedIn) return;
+        
+        editableClasses.forEach(className => {
+            const elements = document.querySelectorAll('.' + className);
+            elements.forEach((element, index) => {
+                // 加载保存的文字
+                loadSavedText(element);
+                
+                // 创建编辑按钮
+                createEditButton(element);
+                
+                // 双击编辑
+                element.addEventListener('dblclick', (e) => {
+                    if (isLoggedIn) {
+                        e.preventDefault();
+                        startEditing(element);
+                    }
+                });
+            });
+        });
+    }
+    
+    // 页面加载完成后初始化
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initEditableText);
+    } else {
+        initEditableText();
+    }
+    
+    // 监听登录状态变化
+    const editableTextOriginalUpdateUIForLogin = window.updateUIForLogin;
+    window.updateUIForLogin = function() {
+        if (editableTextOriginalUpdateUIForLogin) editableTextOriginalUpdateUIForLogin();
+        setTimeout(initEditableText, 100);
+    };
+    
+    const editableTextOriginalUpdateUIForLogout = window.updateUIForLogout;
+    window.updateUIForLogout = function() {
+        if (editableTextOriginalUpdateUIForLogout) editableTextOriginalUpdateUIForLogout();
+        // 移除所有编辑按钮
+        document.querySelectorAll('.inline-edit-btn').forEach(btn => btn.remove());
+    };
+    
+    // 如果已经登录，立即初始化
+    if (typeof isLoggedIn !== 'undefined' && isLoggedIn) {
+        setTimeout(initEditableText, 500);
+    }
+})();
+
+// 书签式抽拉效果功能
+(function() {
+    // 书签数据
+    let bookmarks = [
+        {
+            id: 1,
+            title: '项目一',
+            content: '点击编辑内容...\n\n支持多行换行排版。'
+        },
+        {
+            id: 2,
+            title: '项目二',
+            content: '点击编辑内容...\n\n支持多行换行排版。'
+        },
+        {
+            id: 3,
+            title: '项目三',
+            content: '点击编辑内容...\n\n支持多行换行排版。'
+        }
+    ];
+    
+    // 初始化书签
+    function initBookmarks() {
+        // 绑定书签点击事件
+        document.querySelectorAll('.bookmark-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const bookmarkId = parseInt(this.dataset.bookmark);
+                activateBookmark(bookmarkId);
+            });
+        });
+        
+        // 绑定编辑和删除按钮事件
+        document.querySelectorAll('.bookmark-edit-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const tab = this.closest('.bookmark-tab');
+                const bookmarkId = parseInt(tab.dataset.bookmark);
+                editBookmarkTitle(bookmarkId);
+            });
+        });
+        
+        document.querySelectorAll('.bookmark-delete-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const tab = this.closest('.bookmark-tab');
+                const bookmarkId = parseInt(tab.dataset.bookmark);
+                deleteBookmark(bookmarkId);
+            });
+        });
+        
+        // 绑定添加书签按钮事件
+        document.querySelector('.bookmark-add').addEventListener('click', addBookmark);
+    }
+    
+    // 激活书签
+    function activateBookmark(bookmarkId) {
+        // 移除所有活动状态
+        document.querySelectorAll('.bookmark-tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.bookmark-panel').forEach(panel => panel.classList.remove('active'));
+        
+        // 添加活动状态
+        document.querySelector(`[data-bookmark="${bookmarkId}"]`).classList.add('active');
+        document.querySelector(`.bookmark-panel[data-bookmark="${bookmarkId}"]`).classList.add('active');
+    }
+    
+    // 编辑书签标题
+    function editBookmarkTitle(bookmarkId) {
+        const bookmark = bookmarks.find(b => b.id === bookmarkId);
+        if (!bookmark) return;
+        
+        const newTitle = prompt('请输入新的书签名称:', bookmark.title);
+        if (newTitle && newTitle.trim()) {
+            bookmark.title = newTitle.trim();
+            document.querySelector(`[data-bookmark="${bookmarkId}"] span`).textContent = newTitle.trim();
+            document.querySelector(`.bookmark-panel[data-bookmark="${bookmarkId}"] h3`).textContent = newTitle.trim();
+        }
+    }
+    
+    // 删除书签
+    function deleteBookmark(bookmarkId) {
+        if (bookmarks.length <= 1) {
+            alert('至少需要保留一个书签');
+            return;
+        }
+        
+        if (confirm('确定要删除这个书签吗？')) {
+            bookmarks = bookmarks.filter(b => b.id !== bookmarkId);
+            // 移除DOM元素
+            document.querySelector(`[data-bookmark="${bookmarkId}"]`).remove();
+            document.querySelector(`.bookmark-panel[data-bookmark="${bookmarkId}"]`).remove();
+            // 激活第一个书签
+            if (bookmarks.length > 0) {
+                activateBookmark(bookmarks[0].id);
+            }
+        }
+    }
+    
+    // 添加书签
+    function addBookmark() {
+        const newId = Date.now();
+        const newBookmark = {
+            id: newId,
+            title: `项目${bookmarks.length + 1}`,
+            content: '点击编辑内容...\n\n支持多行换行排版。'
+        };
+        bookmarks.push(newBookmark);
+        
+        // 添加书签标签
+        const tabsContainer = document.querySelector('.bookmark-tabs');
+        const addBtn = document.querySelector('.bookmark-add');
+        const newTab = document.createElement('div');
+        newTab.className = 'bookmark-tab';
+        newTab.dataset.bookmark = newId;
+        newTab.innerHTML = `
+            <span>${newBookmark.title}</span>
+            <button class="bookmark-edit-btn" title="编辑名称">✏️</button>
+            <button class="bookmark-delete-btn" title="删除">🗑️</button>
+        `;
+        tabsContainer.insertBefore(newTab, addBtn);
+        
+        // 添加书签面板
+        const contentContainer = document.querySelector('.bookmark-content');
+        const newPanel = document.createElement('div');
+        newPanel.className = 'bookmark-panel';
+        newPanel.dataset.bookmark = newId;
+        newPanel.innerHTML = `
+            <h3>${newBookmark.title}</h3>
+            <p>${newBookmark.content}</p>
+            <button class="btn btn-primary mt-4" onclick="editBookmarkContent(${newId})")">编辑内容</button>
+        `;
+        contentContainer.appendChild(newPanel);
+        
+        // 绑定事件
+        newTab.addEventListener('click', function() {
+            activateBookmark(newId);
+        });
+        
+        newTab.querySelector('.bookmark-edit-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            editBookmarkTitle(newId);
+        });
+        
+        newTab.querySelector('.bookmark-delete-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            deleteBookmark(newId);
+        });
+        
+        // 激活新书签
+        activateBookmark(newId);
+    }
+    
+    // 编辑书签内容
+    window.editBookmarkContent = function(bookmarkId) {
+        const bookmark = bookmarks.find(b => b.id === bookmarkId);
+        if (!bookmark) return;
+        
+        const panel = document.querySelector(`.bookmark-panel[data-bookmark="${bookmarkId}"]`);
+        if (!panel) return;
+        
+        panel.innerHTML = `
+            <h3>${bookmark.title}</h3>
+            <div class="bookmark-edit-mode">
+                <textarea id="bookmarkEditText-${bookmarkId}">${bookmark.content}</textarea>
+                <div class="bookmark-edit-actions">
+                    <button class="bookmark-cancel-btn" onclick="cancelBookmarkEdit(${bookmarkId})")">取消</button>
+                    <button class="bookmark-save-btn" onclick="saveBookmarkEdit(${bookmarkId})")">保存</button>
+                </div>
+            </div>
+        `;
+        
+        // 自动调整高度
+        const textarea = document.getElementById(`bookmarkEditText-${bookmarkId}`);
+        textarea.style.height = textarea.scrollHeight + 'px';
+        textarea.focus();
+    };
+    
+    // 保存编辑
+    window.saveBookmarkEdit = function(bookmarkId) {
+        const bookmark = bookmarks.find(b => b.id === bookmarkId);
+        if (!bookmark) return;
+        
+        const textarea = document.getElementById(`bookmarkEditText-${bookmarkId}`);
+        if (!textarea) return;
+        
+        bookmark.content = textarea.value;
+        const panel = document.querySelector(`.bookmark-panel[data-bookmark="${bookmarkId}"]`);
+        panel.innerHTML = `
+            <h3>${bookmark.title}</h3>
+            <p>${bookmark.content}</p>
+            <button class="btn btn-primary mt-4" onclick="editBookmarkContent(${bookmarkId})")">编辑内容</button>
+        `;
+    };
+    
+    // 取消编辑
+    window.cancelBookmarkEdit = function(bookmarkId) {
+        const bookmark = bookmarks.find(b => b.id === bookmarkId);
+        if (!bookmark) return;
+        
+        const panel = document.querySelector(`.bookmark-panel[data-bookmark="${bookmarkId}"]`);
+        panel.innerHTML = `
+            <h3>${bookmark.title}</h3>
+            <p>${bookmark.content}</p>
+            <button class="btn btn-primary mt-4" onclick="editBookmarkContent(${bookmarkId})")">编辑内容</button>
+        `;
+    };
+    
+    // 页面加载时初始化
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initBookmarks);
+    } else {
+        initBookmarks();
+    }
+})();
