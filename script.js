@@ -2357,6 +2357,16 @@ async function uploadFiles(files) {
                 continue;
             }
             
+            // 检查文件大小（限制为500MB）
+            const maxFileSize = 500 * 1024 * 1024; // 500MB
+            if (file.size > maxFileSize) {
+                console.warn(`文件 "${file.name}" 大小超过限制（最大500MB）`);
+                errorCount++;
+                completedCount++;
+                checkAllCompleted();
+                continue;
+            }
+            
             // 处理文件上传
             await (async () => {
                 try {
@@ -2365,23 +2375,16 @@ async function uploadFiles(files) {
                     progressFill.style.width = fileProgress + '%';
                     progressText.textContent = `上传中... ${index + 1}/${totalFiles} - ${file.name.substring(0, 20)}...`;
                     
-                   // 读取文件为 ArrayBuffer
-const reader = new FileReader();
-const fileBuffer = await new Promise((resolve, reject) => {
-    reader.onload = (e) => resolve(e.target.result);
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
-});
-
-// 调用 API 上传文件
-const response = await fetch('/api/upload', {
-    method: 'POST',
-    headers: {
-        'content-type': file.type,
-        'x-filename': file.name
-    },
-    body: fileBuffer,
-});
+                    // 使用 FormData 上传文件（与后端 multiparty 匹配）
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('projectId', currentProjectId);
+                    
+                    // 调用 API 上传文件
+                    const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData,
+                    });
 
                     if (!response.ok) {
                         throw new Error('上传失败');
