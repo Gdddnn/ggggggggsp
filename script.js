@@ -5502,3 +5502,65 @@ document.addEventListener('DOMContentLoaded', () => {
         initBookmarks();
     }
 })();
+
+// ==================== 文本换行排版控制功能 ====================
+
+// 设置文本换行模式
+window.setTextWrapMode = function(mode) {
+    // 移除所有模式类
+    document.body.classList.remove('text-wrap-mode', 'text-no-wrap');
+    
+    // 移除所有按钮的 active 类
+    document.querySelectorAll('.text-control-panel button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // 根据模式应用相应的样式
+    switch(mode) {
+        case 'wrap':
+            // 自动换行模式
+            document.body.classList.add('text-wrap-mode');
+            document.getElementById('wrapModeBtn').classList.add('active');
+            localStorage.setItem('textWrapMode', 'wrap');
+            break;
+        case 'nowrap':
+            // 不换行模式
+            document.body.classList.add('text-no-wrap');
+            document.getElementById('noWrapModeBtn').classList.add('active');
+            localStorage.setItem('textWrapMode', 'nowrap');
+            break;
+        case 'prewrap':
+            // 保留换行模式
+            document.body.classList.add('text-wrap-mode');
+            document.getElementById('preWrapModeBtn').classList.add('active');
+            localStorage.setItem('textWrapMode', 'prewrap');
+            break;
+    }
+    
+    console.log('文本排版模式已切换为:', mode);
+};
+
+// 页面加载时恢复上次的文本排版模式
+document.addEventListener('DOMContentLoaded', function() {
+    const savedMode = localStorage.getItem('textWrapMode') || 'wrap';
+    setTextWrapMode(savedMode);
+});
+
+// 切换控制面板显示/隐藏（双击页面空白处）
+document.addEventListener('dblclick', function(e) {
+    // 如果双击的是空白区域（不是按钮、输入框等交互元素）
+    if (e.target.tagName === 'BODY' || e.target.tagName === 'DIV' || e.target.tagName === 'SECTION') {
+        const panel = document.getElementById('textControlPanel');
+        if (panel) {
+            panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+        }
+    }
+});
+
+// 初始化时显示控制面板（可以注释掉这行来默认隐藏）
+// document.addEventListener('DOMContentLoaded', function() {
+//     const panel = document.getElementById('textControlPanel');
+//     if (panel) {
+//         panel.style.display = 'flex';
+//     }
+// });
