@@ -895,7 +895,7 @@ function initLoginSystem() {
                                     // 保存到服务器
                                     const key = `${selector.replace('.', '')}_${index}`;
                                     try {
-                                        await fetch('/api/save-text-content', {
+                                        await fetch('/api/text-content', {
                                             method: 'POST',
                                             headers: {
                                                 'Content-Type': 'application/json'
@@ -4810,7 +4810,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 尝试从服务器加载
         try {
-            const response = await fetch(`/api/get-text-content?key=${encodeURIComponent(key)}&section=about`);
+            const response = await fetch(`/api/text-content?key=${encodeURIComponent(key)}&section=about`);
             const data = await response.json();
             if (data.success && data.content) {
                 element.textContent = data.content;
@@ -4838,7 +4838,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 尝试保存到服务器
         try {
-            await fetch('/api/save-text-content', {
+            await fetch('/api/text-content', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
