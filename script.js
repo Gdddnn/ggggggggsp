@@ -2142,8 +2142,8 @@ async function loadSingleMediaItem(item, media, index, projectId) {
             videoElement.preload = 'metadata'; // 只预加载元数据
             videoElement.style.cssText = 'width: 100%; height: 200px; object-fit: cover; display: block; background: #000;';
             
-            // 检查URL是否有效
-            if (!media.url || !media.url.startsWith('http'))
+            // 检查URL是否有效（至少包含基本的URL结构）
+            if (!media.url || !media.url.startsWith('http')) {
                 console.error('视频URL无效:', media);
                 const errorDiv = document.createElement('div');
                 errorDiv.style.cssText = 'padding: 1rem; color: var(--text-secondary); text-align: center;';
@@ -5437,8 +5437,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="bookmark-edit-mode">
                 <textarea id="bookmarkEditText-${bookmarkId}">${bookmark.content}</textarea>
                 <div class="bookmark-edit-actions">
-                    <button class="bookmark-cancel-btn" onclick="cancelBookmarkEdit(${bookmarkId})")">取消</button>
-                    <button class="bookmark-save-btn" onclick="saveBookmarkEdit(${bookmarkId})")">保存</button>
+                    <button class="bookmark-cancel-btn" onclick="cancelBookmarkEdit(${bookmarkId})">取消</button>
+                    <button class="bookmark-save-btn" onclick="saveBookmarkEdit(${bookmarkId})">保存</button>
                 </div>
             </div>
         `;
