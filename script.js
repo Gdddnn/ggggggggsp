@@ -894,8 +894,9 @@ function initLoginSystem() {
                                     
                                     // 保存到服务器
                                     const key = `${selector.replace('.', '')}_${index}`;
+                                    console.log('正在保存到服务器:', key, '内容:', newText.substring(0, 50) + '...');
                                     try {
-                                        await fetch('/api/text-content', {
+                                        const response = await fetch('/api/text-content', {
                                             method: 'POST',
                                             headers: {
                                                 'Content-Type': 'application/json'
@@ -906,7 +907,13 @@ function initLoginSystem() {
                                                 section: 'about'
                                             })
                                         });
-                                        console.log('内容已保存到服务器:', key);
+                                        const result = await response.json();
+                                        console.log('服务器响应:', result);
+                                        if (result.success) {
+                                            console.log('内容已成功保存到服务器:', key);
+                                        } else {
+                                            console.error('服务器保存失败:', result.error);
+                                        }
                                         // 同时保存到 localStorage 作为备份
                                         localStorage.setItem(`about_${key}`, newText);
                                     } catch (error) {
@@ -3271,24 +3278,29 @@ async function loadAboutData() {
                 const element = elements[index];
                 const key = `${selector.replace('.', '')}_${index}`;
                 
+                console.log('正在加载内容:', key);
+                
                 // 优先从服务器加载
                 let savedText = null;
                 try {
                     const response = await fetch(`/api/text-content?key=${encodeURIComponent(key)}&section=about`);
                     const data = await response.json();
+                    console.log('服务器响应:', key, data);
                     if (data.success && data.content) {
                         savedText = data.content;
-                        console.log('从服务器加载内容:', key);
+                        console.log('从服务器加载内容:', key, savedText.substring(0, 50) + '...');
+                    } else {
+                        console.log('服务器没有数据:', key);
                     }
                 } catch (error) {
-                    console.error('从服务器加载失败:', error);
+                    console.error('从服务器加载失败:', key, error);
                 }
                 
                 // 如果服务器没有数据，从localStorage加载
                 if (!savedText) {
                     savedText = localStorage.getItem(`about_${key}`);
                     if (savedText) {
-                        console.log('从localStorage加载内容:', key);
+                        console.log('从localStorage加载内容:', key, savedText.substring(0, 50) + '...');
                     }
                 }
                 
