@@ -2143,7 +2143,7 @@ async function loadSingleMediaItem(item, media, index, projectId) {
             videoElement.style.cssText = 'width: 100%; height: 200px; object-fit: cover; display: block; background: #000;';
             
             // 检查URL是否有效
-            if (!media.url || media.url.length < 100) {
+            if (!media.url || !media.url.startsWith('http'))
                 console.error('视频URL无效:', media);
                 const errorDiv = document.createElement('div');
                 errorDiv.style.cssText = 'padding: 1rem; color: var(--text-secondary); text-align: center;';
