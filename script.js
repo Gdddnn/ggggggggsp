@@ -2357,15 +2357,17 @@ async function uploadFiles(files) {
                 continue;
             }
             
-            // 检查文件大小（限制为500MB）
-            const maxFileSize = 500 * 1024 * 1024; // 500MB
-            if (file.size > maxFileSize) {
-                console.warn(`文件 "${file.name}" 大小超过限制（最大500MB）`);
-                errorCount++;
-                completedCount++;
-                checkAllCompleted();
-                continue;
-            }
+            // 检查文件大小（限制为500MB，使用客户端 SDK 后可以上传更大的文件）
+                    const maxFileSize = 500 * 1024 * 1024; // 500MB
+                    if (file.size > maxFileSize) {
+                        console.warn(`文件 "${file.name}" 大小超过限制（最大500MB）`);
+                        errorCount++;
+                        completedCount++;
+                        checkAllCompleted();
+                        // 显示明确的错误消息
+                        alert(`文件 "${file.name}" 大小超过限制（最大500MB）`);
+                        continue;
+                    }
             
             // 处理文件上传
             await (async () => {
@@ -2375,22 +2377,62 @@ async function uploadFiles(files) {
                     progressFill.style.width = fileProgress + '%';
                     progressText.textContent = `上传中... ${index + 1}/${totalFiles} - ${file.name.substring(0, 20)}...`;
                     
-                    // 使用 FormData 上传文件（与后端 multiparty 匹配）
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    formData.append('projectId', currentProjectId);
+                    // 使用客户端 SDK 直接上传大文件
+                    // 绕过服务器端的请求大小限制
+                    const timestamp = Date.now();
+                    const uniqueFilename = `${timestamp}-${file.name}`;
+                    const filePath = `public-videos/${uniqueFilename}`;
                     
-                    // 调用 API 上传文件
-                    const response = await fetch('/api/upload', {
-                        method: 'POST',
-                        body: formData,
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('上传失败');
+                    console.log(`开始上传: ${file.name} (${file.size} 字节)`);
+                    
+                    try {
+                        // 确保 Vercel Blob SDK 可用
+                        let putBlobFunction;
+                        
+                        // 检查是否已经加载了 SDK
+                        if (typeof put === 'function') {
+                            putBlobFunction = put;
+                            console.log('使用全局 put 函数上传');
+                        } else if (window.putBlob) {
+                            putBlobFunction = window.putBlob;
+                            console.log('使用 window.putBlob 上传');
+                        } else {
+                            // 动态加载 SDK
+                            console.log('动态加载 Vercel Blob SDK');
+                            const { put } = await import('https://esm.sh/@vercel/blob');
+                            putBlobFunction = put;
+                        }
+                        
+                        if (!putBlobFunction) {
+                            throw new Error('Vercel Blob SDK 未加载');
+                        }
+                        
+                        // 直接上传文件到 Vercel Blob
+                        const blob = await putBlobFunction(filePath, file, {
+                            access: 'public',
+                            contentType: file.type || 'application/octet-stream'
+                        });
+                        
+                        console.log('文件上传成功:', blob);
+                        
+                        const result = {
+                            success: true,
+                            name: uniqueFilename,
+                            url: blob.url,
+                            size: file.size
+                        };
+                    } catch (error) {
+                        console.error('上传失败:', error);
+                        throw new Error('上传失败: ' + error.message);
                     }
-
-                    const result = await response.json();
+                    
+                    // 上传完成后，构建默认结果对象（作为 fallback）
+                    const result = {
+                        success: true,
+                        name: uniqueFilename,
+                        url: `https://public.blob.vercel-storage.com/public-videos/${uniqueFilename}`,
+                        size: file.size
+                    };
 
                     // 确定文件类型
                     let mediaType = 'file';

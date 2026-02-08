@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>简单上传测试</title>
+  <style>
+    body { padding: 20px; max-width: 600px; margin: 0 auto; font-family: Arial; }
+    .upload-area { margin: 20px 0; padding: 20px; border: 2px dashed #ccc; text-align: center; }
+    .result { margin: 20px 0; padding: 10px; border-radius: 5px; }
+    .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+  </style>
+</head>
+<body>
+  <h1>简单上传测试</h1>
+  
+  <div class="upload-area">
+    <h3>选择文件上传</h3>
+    <input type="file" id="fileInput" accept="*/*">
+    <button id="uploadBtn">上传</button>
+    <div id="status"></div>
+  </div>
+  
+  <div id="result" class="result" style="display: none;"></div>
+  
+  <!-- 引入 Vercel Blob SDK -->
+  <script type="module">
+    // 从 CDN 引入 Vercel Blob SDK
+    import { put } from 'https://esm.sh/@vercel/blob';
+    
+    document.getElementById('uploadBtn').addEventListener('click', async () => {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      const statusDiv = document.getElementById('status');
+      const resultDiv = document.getElementById('result');
+      
+      if (!file) {
+        showResult('请选择文件！', 'error');
+        return;
+      }
+      
+      try {
+        statusDiv.textContent = '上传中...';
+        
+        // 生成唯一文件名
+        const timestamp = Date.now();
+        const uniqueFilename = `${timestamp}-${file.name}`;
+        const filePath = `public-videos/${uniqueFilename}`;
+        
+        console.log(`开始上传: ${file.name} (${file.size} 字节)`);
+        
+        // 直接上传文件到 Vercel Blob
+        // 注意：这种方法需要在 Vercel 环境中运行，并且需要正确配置 BLOB_READ_WRITE_TOKEN
+        const { url } = await put(filePath, file, {
+          access: 'public',
+          contentType: file.type || 'application/octet-stream'
+        });
+        
+        showResult(`文件上传成功！<br>URL: ${url}`, 'success');
+        console.log('上传成功:', url);
+        statusDiv.textContent = '上传完成！';
+        
+      } catch (error) {
+        console.error('上传失败:', error);
+        showResult(`上传失败: ${error.message}`, 'error');
+        statusDiv.textContent = '上传失败！';
+      }
+    });
+    
+    function showResult(message, type) {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = message;
+      resultDiv.className = `result ${type}`;
+      resultDiv.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

@@ -3,7 +3,23 @@
   "builds": [
     {
       "src": "api/upload.js",
-      "use": "@vercel/node"
+      "use": "@vercel/edge"
+    },
+    {
+      "src": "api/get-upload-url.js",
+      "use": "@vercel/edge"
+    },
+    {
+      "src": "api/upload-chunk.js",
+      "use": "@vercel/edge"
+    },
+    {
+      "src": "api/simple-upload.js",
+      "use": "@vercel/edge"
+    },
+    {
+      "src": "api/edge-upload.js",
+      "use": "@vercel/edge"
     },
     {
       "src": "*.html",
@@ -22,6 +38,22 @@
     {
       "src": "/api/upload",
       "dest": "/api/upload.js"
+    },
+    {
+      "src": "/api/get-upload-url",
+      "dest": "/api/get-upload-url.js"
+    },
+    {
+      "src": "/api/upload-chunk",
+      "dest": "/api/upload-chunk.js"
+    },
+    {
+      "src": "/api/simple-upload",
+      "dest": "/api/simple-upload.js"
+    },
+    {
+      "src": "/api/edge-upload",
+      "dest": "/api/edge-upload.js"
     },
     {
       "src": "/api/get-all-files",

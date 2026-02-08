@@ -667,6 +667,17 @@
     <!-- 小玩偶苹果元素 -->
     <div id="appleDoll" style="position: fixed; top: 0; left: 0; font-size: 2rem; pointer-events: none; z-index: 9999; display: none;">🍎</div>
 
+    <!-- 引入 Vercel Blob SDK -->
+    <script type="module">
+      // 从 CDN 引入 Vercel Blob SDK
+      import { put } from 'https://esm.sh/@vercel/blob';
+      
+      // 将 put 函数暴露到全局，供其他脚本使用
+      window.put = put;
+      window.putBlob = put;
+      console.log('Vercel Blob SDK 加载成功');
+    </script>
+    
     <script src="script.js"></script>
-</body>
+  </body>
 </html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>分块上传测试</title>
+  <style>
+    body { padding: 20px; max-width: 800px; margin: 0 auto; font-family: Arial; }
+    .upload-area { margin: 20px 0; padding: 20px; border: 2px dashed #ccc; text-align: center; }
+    .file-info { margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 5px; }
+    .progress-bar { width: 100%; height: 20px; background: #f0f0f0; border-radius: 10px; margin: 10px 0; overflow: hidden; }
+    .progress-fill { height: 100%; background: #4CAF50; width: 0%; transition: width 0.3s ease; }
+    .result { margin: 20px 0; padding: 10px; border-radius: 5px; }
+    .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+  </style>
+</head>
+<body>
+  <h1>分块上传测试</h1>
+  
+  <div class="upload-area">
+    <h3>选择文件上传</h3>
+    <input type="file" id="fileInput" accept="*/*" multiple>
+    <button id="uploadBtn">上传</button>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div id="progressText">准备上传</div>
+  </div>
+  
+  <div id="fileList"></div>
+  <div id="result" class="result" style="display: none;"></div>
+  
+  <script>
+    document.getElementById('uploadBtn').addEventListener('click', async () => {
+      const fileInput = document.getElementById('fileInput');
+      const files = fileInput.files;
+      const resultDiv = document.getElementById('result');
+      const progressFill = document.getElementById('progressFill');
+      const progressText = document.getElementById('progressText');
+      const fileListDiv = document.getElementById('fileList');
+      
+      if (!files.length) {
+        showResult('请选择文件！', 'error');
+        return;
+      }
+      
+      // 显示文件列表
+      fileListDiv.innerHTML = '';
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        fileListDiv.innerHTML += `
+          <div class="file-info">
+            <strong>文件 ${i + 1}:</strong> ${file.name}<br>
+            <strong>大小:</strong> ${formatFileSize(file.size)}<br>
+            <strong>类型:</strong> ${file.type || '未知'}
+          </div>
+        `;
+      }
+      
+      // 逐个上传文件
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        try {
+          // 分块上传
+          await uploadFileInChunks(file, i, files.length, progressFill, progressText);
+          showResult(`文件 ${file.name} 上传成功！`, 'success');
+        } catch (error) {
+          console.error('上传失败:', error);
+          showResult(`文件 ${file.name} 上传出错: ${error.message}`, 'error');
+        }
+      }
+      
+      // 上传完成
+      progressFill.style.width = '100%';
+      progressText.textContent = '上传完成！';
+    });
+    
+    async function uploadFileInChunks(file, fileIndex, totalFiles, progressFill, progressText) {
+      // 分块大小：256KB（更小的分块，确保在限制范围内）
+      const chunkSize = 256 * 1024;
+      const totalChunks = Math.ceil(file.size / chunkSize);
+      const filename = Date.now() + '-' + file.name;
+      
+      console.log(`开始分块上传: ${file.name} (${totalChunks} 块)`);
+      
+      for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+        // 更新进度
+        const chunkProgress = (chunkIndex / totalChunks) * 100;
+        const overallProgress = (fileIndex / totalFiles) * 100 + (chunkProgress / totalFiles);
+        progressFill.style.width = overallProgress + '%';
+        progressText.textContent = `上传中... ${fileIndex + 1}/${totalFiles} - ${file.name.substring(0, 20)}... (块 ${chunkIndex + 1}/${totalChunks})`;
+        
+        // 计算分块范围
+        const start = chunkIndex * chunkSize;
+        const end = Math.min(start + chunkSize, file.size);
+        const chunk = file.slice(start, end);
+        
+        // 创建表单数据
+        const formData = new FormData();
+        formData.append('chunk', chunk);
+        formData.append('filename', filename);
+        formData.append('chunkIndex', chunkIndex);
+        formData.append('totalChunks', totalChunks);
+        
+        // 上传分块
+        console.log(`上传分块 ${chunkIndex + 1}/${totalChunks}: ${start}-${end} 字节`);
+        
+        const response = await fetch('/api/upload-chunk', {
+          method: 'POST',
+          body: formData,
+          // 增加超时时间
+          timeout: 30000
+        });
+        
+        if (!response.ok) {
+          throw new Error(`上传分块失败: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(`上传分块失败: ${data.error}`);
+        }
+        
+        console.log(`分块 ${chunkIndex + 1}/${totalChunks} 上传成功`);
+        
+        // 检查是否所有分块都已上传完成
+        if (data.receivedChunks === totalChunks) {
+          console.log(`所有分块上传完成，文件: ${file.name}`);
+          return data;
+        }
+      }
+      
+      // 如果循环结束但没有返回，说明上传失败
+      throw new Error('上传分块完成但未收到最终结果');
+    }
+    
+    function showResult(message, type) {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = message;
+      resultDiv.className = `result ${type}`;
+      resultDiv.style.display = 'block';
+    }
+    
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+      if (bytes < 1073741824) return (bytes / 1048576).toFixed(2) + ' MB';
+      return (bytes / 1073741824).toFixed(2) + ' GB';
+    }
+  </script>
+</body>
+</html>

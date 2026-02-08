@@ -20,6 +20,9 @@
     "@vercel/blob": "^0.23.0",
     "multiparty": "^4.2.3"
   },
+  "browser": {
+    "@vercel/blob": false
+  },
   "devDependencies": {
     "vercel": "^33.0.0"
   }
