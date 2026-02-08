@@ -893,7 +893,7 @@ function initLoginSystem() {
                                     }
                                     
                                     // 保存到服务器
-                                    const key = `${selector.replace('.', '')}_${index}`;
+                                    const key = 'text_' + element.className + '_' + getElementPath(element);
                                     try {
                                         await fetch('/api/text-content', {
                                             method: 'POST',
@@ -907,10 +907,12 @@ function initLoginSystem() {
                                             })
                                         });
                                         console.log('内容已保存到服务器:', key);
+                                        // 同时保存到 localStorage 作为备份
+                                        localStorage.setItem(key, newText);
                                     } catch (error) {
                                         console.error('保存到服务器失败:', error);
                                         // 如果服务器保存失败，保存到 localStorage 作为备份
-                                        localStorage.setItem(`about_${key}`, newText);
+                                        localStorage.setItem(key, newText);
                                     }
                                 } else {
                                     // 如果内容为空，恢复原内容
