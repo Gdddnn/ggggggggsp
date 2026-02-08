@@ -5149,7 +5149,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         currentEditingElement = element;
-        const originalText = element.childNodes[0]?.textContent || element.textContent;
+        // 获取原始文本，排除编辑按钮的文本
+        let originalText = '';
+        for (let i = 0; i < element.childNodes.length; i++) {
+            const node = element.childNodes[i];
+            if (node.nodeType === Node.TEXT_NODE) {
+                originalText += node.textContent;
+            }
+        }
+        // 如果没有文本节点，使用 textContent（兼容初始状态）
+        if (!originalText) {
+            originalText = element.textContent;
+        }
         
         // 隐藏编辑按钮
         const editBtn = element.querySelector('.inline-edit-btn');
