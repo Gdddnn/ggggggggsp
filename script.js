@@ -823,7 +823,7 @@ function initLoginSystem() {
                             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
                             font-size: 10px;
                         `;
-                        editBtn.title = '编辑文本';
+                        editBtn.title = '编辑文本（支持换行）';
                         editBtn.addEventListener('click', (e) => {
                             e.stopPropagation();
                             // 获取除了编辑按钮之外的文本内容
@@ -836,27 +836,94 @@ function initLoginSystem() {
                             }
                             currentText = currentText.trim();
                             
-                            const newText = prompt('请输入新的内容:', currentText);
-                            if (newText !== null && newText.trim() !== '') {
-                                // 保存编辑按钮
-                                const editButton = element.querySelector('.edit-text-btn');
-                                
-                                // 清空元素内容
-                                element.innerHTML = '';
-                                
-                                // 创建新的文本节点
-                                const textNode = document.createTextNode(newText.trim());
-                                element.appendChild(textNode);
-                                
-                                // 重新添加编辑按钮
-                                if (editButton) {
-                                    element.appendChild(editButton);
-                                }
-                                
-                                // 保存到localStorage
-                                const key = `about_${selector.replace('.', '')}_${index}`;
-                                localStorage.setItem(key, newText.trim());
+                            // 保存编辑按钮
+                            const editButton = element.querySelector('.edit-text-btn');
+                            
+                            // 创建 textarea 进行内联编辑
+                            const textarea = document.createElement('textarea');
+                            textarea.value = currentText;
+                            textarea.style.cssText = `
+                                width: 100%;
+                                min-height: 100px;
+                                padding: 8px;
+                                border: 2px solid var(--primary-blue);
+                                border-radius: 6px;
+                                font-family: inherit;
+                                font-size: inherit;
+                                line-height: inherit;
+                                color: inherit;
+                                background: white;
+                                resize: vertical;
+                                outline: none;
+                                box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+                            `;
+                            
+                            // 清空元素内容并添加 textarea
+                            element.innerHTML = '';
+                            element.appendChild(textarea);
+                            textarea.focus();
+                            textarea.select();
+                            
+                            // 自动调整高度
+                            const maxHeight = 300;
+                            function adjustHeight() {
+                                textarea.style.height = 'auto';
+                                const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+                                textarea.style.height = newHeight + 'px';
                             }
+                            textarea.style.maxHeight = maxHeight + 'px';
+                            textarea.style.overflowY = 'auto';
+                            adjustHeight();
+                            textarea.addEventListener('input', adjustHeight);
+                            
+                            // 保存编辑的函数
+                            function saveEdit() {
+                                const newText = textarea.value;
+                                if (newText.trim() !== '') {
+                                    // 清空元素内容
+                                    element.innerHTML = '';
+                                    
+                                    // 创建新的文本节点
+                                    const textNode = document.createTextNode(newText);
+                                    element.appendChild(textNode);
+                                    
+                                    // 重新添加编辑按钮
+                                    if (editButton) {
+                                        element.appendChild(editButton);
+                                    }
+                                    
+                                    // 保存到localStorage
+                                    const key = `about_${selector.replace('.', '')}_${index}`;
+                                    localStorage.setItem(key, newText);
+                                } else {
+                                    // 如果内容为空，恢复原内容
+                                    element.innerHTML = '';
+                                    const textNode = document.createTextNode(currentText);
+                                    element.appendChild(textNode);
+                                    if (editButton) {
+                                        element.appendChild(editButton);
+                                    }
+                                }
+                                document.removeEventListener('click', handleClickOutside);
+                            }
+                            
+                            // 点击外部保存
+                            function handleClickOutside(e) {
+                                if (!element.contains(e.target)) {
+                                    saveEdit();
+                                }
+                            }
+                            setTimeout(() => {
+                                document.addEventListener('click', handleClickOutside);
+                            }, 100);
+                            
+                            // ESC键保存
+                            textarea.addEventListener('keydown', (e) => {
+                                if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    saveEdit();
+                                }
+                            });
                         });
                         element.style.position = 'relative';
                         element.appendChild(editBtn);
