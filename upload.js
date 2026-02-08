@@ -1,25 +1,18 @@
 // api/upload.js
 import { put } from '@vercel/blob';
-import multiparty from 'multiparty';
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-export default async function handler(req, res) {
+export default function handler(req, res) {
   if (req.method === 'POST') {
-    try {
-      const form = new multiparty.Form();
-      const { fields, files } = await new Promise((resolve, reject) => {
-        form.parse(req, (err, fields, files) => {
-          if (err) reject(err);
-          else resolve({ fields, files });
-        });
-      });
+    // 处理文件上传
+    const formidable = require('formidable');
+    const form = new formidable.IncomingForm();
 
-      const file = files.file[0];
+    form.parse(req, async (err, fields, files) => {
+      if (err) {
+        return res.status(500).json({ error: 'Upload failed' });
+      }
+
+      const file = files.file;
       if (!file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
@@ -27,20 +20,23 @@ export default async function handler(req, res) {
       const fs = require('fs');
       const fileBuffer = fs.readFileSync(file.path);
 
-      const blob = await put(file.originalFilename, fileBuffer, {
-        access: 'public',
-      });
+      try {
+        const blob = await put(file.name, fileBuffer, {
+          access: 'public',
+          contentType: file.type,
+        });
 
-      return res.json({
-        url: blob.url,
-        name: file.originalFilename,
-        size: file.size,
-        type: file.headers['content-type'],
-      });
-    } catch (error) {
-      console.error('Upload error:', error);
-      return res.status(500).json({ error: 'Upload failed' });
-    }
+        return res.json({
+          url: blob.url,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+        });
+      } catch (error) {
+        console.error('Upload error:', error);
+        return res.status(500).json({ error: 'Upload failed' });
+      }
+    });
   } else {
     return res.status(405).json({ error: 'Method not allowed' });
   }
