@@ -18,7 +18,8 @@
   "license": "MIT",
   "dependencies": {
     "@vercel/blob": "^0.23.0",
-    "multiparty": "^4.2.3"
+    "multiparty": "^4.2.3",
+    "redis": "^4.6.0"
   },
   "browser": {
     "@vercel/blob": false
