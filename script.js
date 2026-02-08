@@ -2335,60 +2335,30 @@ async function uploadFiles(files) {
                 continue;
             }
             
-            // 处理图片压缩和文件读取（使用立即执行函数确保每个文件独立处理）
+            // 处理文件上传到 Vercel Blob
             await (async () => {
                 try {
-                    let fileUrl;
-                    let fileMimeType = file.type;
-                    
                     // 更新进度：开始处理文件
                     const fileProgress = (index / totalFiles) * 100;
                     progressFill.style.width = fileProgress + '%';
-                    progressText.textContent = `处理中... ${index + 1}/${totalFiles} - ${file.name.substring(0, 20)}...`;
+                    progressText.textContent = `上传中... ${index + 1}/${totalFiles} - ${file.name.substring(0, 20)}...`;
                     
-                    // 如果是图片，先压缩
-                    if (file.type.startsWith('image/')) {
-                        progressText.textContent = `压缩图片中... ${index + 1}/${totalFiles} - ${file.name.substring(0, 20)}...`;
-                        try {
-                            fileUrl = await compressImage(file);
-                            fileMimeType = 'image/jpeg'; // 压缩后统一为 JPEG
-                            console.log(`图片压缩完成: ${file.name}`);
-                        } catch (compressError) {
-                            console.warn('压缩失败，使用原图:', compressError);
-                            // 压缩失败，使用原始文件
-                            const reader = new FileReader();
-                            fileUrl = await new Promise((resolve, reject) => {
-                                reader.onload = (e) => resolve(e.target.result);
-                                reader.onerror = reject;
-                                reader.readAsDataURL(file);
-                            });
-                        }
-                    } else {
-                        // 视频文件处理 - 完全不压缩，直接上传原始视频以保持最高画质和音频
-                        progressText.textContent = `读取视频中（原始画质）... ${file.name.substring(0, 20)}...`;
-                        const reader = new FileReader();
-                        fileUrl = await new Promise((resolve, reject) => {
-                            reader.onload = (e) => resolve(e.target.result);
-                            reader.onerror = reject;
-                            reader.onprogress = (e) => {
-                                if (e.lengthComputable) {
-                                    const fileProgress = (e.loaded / e.total) * 100;
-                                    const overallProgress = ((completedCount + fileProgress / 100) / totalFiles) * 100;
-                                    progressFill.style.width = overallProgress + '%';
-                                    progressText.textContent = `上传中（原始画质）... ${completedCount}/${totalFiles} (${file.name.substring(0, 20)}...) ${Math.round(fileProgress)}%`;
-                                }
-                            };
-                            reader.readAsDataURL(file);
-                        });
-                        fileMimeType = file.type; // 保持原始格式
-                        console.log(`视频直接读取完成（原始画质和音频）: ${file.name}, 大小: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+                    // 创建 FormData 并添加文件
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    // 调用 API 上传文件
+                    const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('上传失败');
                     }
-                    
-                    // 确保fileUrl存在
-                    if (!fileUrl) {
-                        throw new Error('文件处理失败，未生成URL');
-                    }
-                    
+
+                    const result = await response.json();
+
                     // 确定文件类型
                     let mediaType = 'file';
                     if (file.type.startsWith('image/')) {
@@ -2403,19 +2373,19 @@ async function uploadFiles(files) {
 
                     const mediaItem = {
                         type: mediaType,
-                        url: fileUrl,
-                        name: file.name,
-                        mimeType: fileMimeType || file.type,
-                        size: file.size,
-                        uploadTime: new Date().toISOString()
+                        url: result.url,
+                        name: result.name,
+                        mimeType: file.type,
+                        size: result.size,
+                        uploadTime: new Date().toISOString(),
                     };
 
                     console.log('保存媒体项:', {
                         type: mediaItem.type,
                         name: mediaItem.name,
                         mimeType: mediaItem.mimeType,
-                        urlLength: mediaItem.url ? mediaItem.url.length : 0,
-                        urlPreview: mediaItem.url ? mediaItem.url.substring(0, 50) + '...' : 'null'
+                        url: mediaItem.url,
+                        size: mediaItem.size
                     });
 
                     // 重新获取最新的媒体数组（防止并发问题）
@@ -2429,7 +2399,8 @@ async function uploadFiles(files) {
                     console.log(`文件 ${completedCount}/${totalFiles} 上传完成: ${file.name}`, {
                         type: mediaItem.type,
                         mimeType: mediaItem.mimeType,
-                        urlLength: mediaItem.url ? mediaItem.url.length : 0,
+                        url: mediaItem.url,
+                        size: mediaItem.size,
                         saveResult: saveResult
                     });
                     
@@ -4756,25 +4727,36 @@ document.addEventListener('DOMContentLoaded', () => {
             const tab = document.createElement('div');
             tab.className = `bookmark-tab ${activeBookmarkId === bookmark.id ? 'active' : ''}`;
             tab.setAttribute('data-bookmark', bookmark.id);
-            tab.innerHTML = `
-                <span>${bookmark.title}</span>
-                ${isLoggedIn ? `
-                    <button class="bookmark-edit-btn" title="编辑名称">✏️</button>
-                    <button class="bookmark-delete-btn" title="删除">🗑️</button>
-                ` : ''}
-            `;
             
-            // 点击标签
-            tab.addEventListener('click', (e) => {
-                if (e.target.classList.contains('bookmark-edit-btn')) {
+            const span = document.createElement('span');
+            span.textContent = bookmark.title;
+            tab.appendChild(span);
+            
+            if (isLoggedIn) {
+                const editBtn = document.createElement('button');
+                editBtn.className = 'bookmark-edit-btn';
+                editBtn.title = '编辑名称';
+                editBtn.textContent = '✏️';
+                editBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     editBookmarkTitle(bookmark.id);
-                } else if (e.target.classList.contains('bookmark-delete-btn')) {
+                });
+                tab.appendChild(editBtn);
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'bookmark-delete-btn';
+                deleteBtn.title = '删除';
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     deleteBookmark(bookmark.id);
-                } else {
-                    activateBookmark(bookmark.id);
-                }
+                });
+                tab.appendChild(deleteBtn);
+            }
+            
+            // 点击标签
+            tab.addEventListener('click', () => {
+                activateBookmark(bookmark.id);
             });
             
             tabsContainer.appendChild(tab);
@@ -4796,16 +4778,36 @@ document.addEventListener('DOMContentLoaded', () => {
             const panel = document.createElement('div');
             panel.className = `bookmark-panel ${activeBookmarkId === bookmark.id ? 'active' : ''}`;
             panel.setAttribute('data-bookmark', bookmark.id);
-            panel.innerHTML = `
-                <h3>${bookmark.title}</h3>
-                <p>${bookmark.content}</p>
-                ${isLoggedIn ? `
-                    <button class="btn btn-primary mt-4" onclick="editBookmarkContent(${bookmark.id})">编辑内容</button>
-                ` : ''}
-            `;
+            
+            const h3 = document.createElement('h3');
+            h3.textContent = bookmark.title;
+            panel.appendChild(h3);
+            
+            const p = document.createElement('p');
+            p.innerHTML = bookmark.content.replace(/\n/g, '<br>');
+            panel.appendChild(p);
+            
+            if (isLoggedIn) {
+                const editBtn = document.createElement('button');
+                editBtn.className = 'btn btn-primary mt-4';
+                editBtn.textContent = '编辑内容';
+                editBtn.addEventListener('click', () => {
+                    editBookmarkContent(bookmark.id);
+                });
+                panel.appendChild(editBtn);
+            }
             
             contentContainer.appendChild(panel);
         });
+        
+        // 调整内容容器高度以适应内容
+        if (activeBookmarkId) {
+            const activePanel = contentContainer.querySelector('.bookmark-panel.active');
+            if (activePanel) {
+                const contentHeight = activePanel.scrollHeight + 80; // 加上padding和margin
+                contentContainer.style.minHeight = Math.max(400, contentHeight) + 'px';
+            }
+        }
     }
     
     // 激活书签

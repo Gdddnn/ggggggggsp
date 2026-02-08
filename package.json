@@ -1,0 +1,26 @@
+{
+  "name": "portfolio-website",
+  "version": "1.0.0",
+  "description": "个人作品集网站",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx vercel dev",
+    "build": "echo \"Build completed\"",
+    "start": "npx vercel dev"
+  },
+  "keywords": [
+    "portfolio",
+    "website",
+    "personal",
+    "responsive"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@vercel/blob": "^0.23.0",
+    "multiparty": "^4.2.3"
+  },
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  }
+}
