@@ -1,0 +1,159 @@
+// API 端点：文本内容管理（保存、获取单个、获取所有）
+module.exports = async (req, res) => {
+  // 设置 CORS 头
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // 处理预检请求
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  // 获取 Redis 配置
+  const redisUrl = process.env.STORAGE_REST_API_URL;
+  const redisToken = process.env.STORAGE_REST_API_TOKEN;
+  
+  if (!redisUrl || !redisToken) {
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Redis configuration not found' 
+    });
+  }
+
+  try {
+    // GET 请求 - 获取内容
+    if (req.method === 'GET') {
+      const { key, section, all } = req.query;
+      
+      // 获取所有内容
+      if (all === 'true') {
+        // 获取所有键
+        const keysResponse = await fetch(`${redisUrl}/keys/*`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${redisToken}` }
+        });
+        
+        if (!keysResponse.ok) {
+          throw new Error(`Redis API error: ${keysResponse.status}`);
+        }
+        
+        const keysData = await keysResponse.json();
+        const allKeys = keysData.value || [];
+        
+        // 如果指定了 section，则过滤键
+        const keys = section 
+          ? allKeys.filter(k => k.startsWith(`${section}:`))
+          : allKeys;
+        
+        // 获取所有内容
+        const contents = {};
+        for (const k of keys) {
+          const response = await fetch(`${redisUrl}/get/${encodeURIComponent(k)}`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${redisToken}` }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            const displayKey = section ? k.replace(`${section}:`, '') : k;
+            contents[displayKey] = data.value || '';
+          }
+        }
+        
+        return res.status(200).json({
+          success: true,
+          contents: contents
+        });
+      }
+      
+      // 获取单个内容
+      if (!key) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Key is required' 
+        });
+      }
+      
+      const storageKey = section ? `${section}:${key}` : key;
+      
+      const response = await fetch(`${redisUrl}/get/${encodeURIComponent(storageKey)}`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${redisToken}` }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Redis API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      return res.status(200).json({
+        success: true,
+        key: storageKey,
+        content: data.value || ''
+      });
+    }
+    
+    // POST 请求 - 保存内容
+    if (req.method === 'POST') {
+      // 解析请求体
+      let data;
+      try {
+        data = await new Promise((resolve, reject) => {
+          let body = '';
+          req.on('data', chunk => { body += chunk.toString(); });
+          req.on('end', () => {
+            try { resolve(JSON.parse(body)); } 
+            catch (err) { reject(new Error('Invalid JSON')); }
+          });
+          req.on('error', reject);
+        });
+      } catch (parseError) {
+        return res.status(400).json({ success: false, error: 'Invalid JSON format' });
+      }
+
+      const { key, content, section } = data;
+      
+      if (!key || content === undefined) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Key and content are required' 
+        });
+      }
+
+      const storageKey = section ? `${section}:${key}` : key;
+      
+      // 调用 Redis REST API 保存数据
+      const response = await fetch(`${redisUrl}/set/${encodeURIComponent(storageKey)}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${redisToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ value: content })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Redis API error: ${response.status}`);
+      }
+      
+      return res.status(200).json({
+        success: true,
+        message: '内容保存成功',
+        key: storageKey
+      });
+    }
+    
+    // 不支持的方法
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
+    
+  } catch (error) {
+    console.error('API 错误:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
