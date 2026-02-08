@@ -14,6 +14,9 @@ module.exports = async (req, res) => {
   const redisUrl = process.env.STORAGE_REST_API_URL;
   const redisToken = process.env.STORAGE_REST_API_TOKEN;
   
+  console.log('Redis URL:', redisUrl ? '已配置' : '未配置');
+  console.log('Redis Token:', redisToken ? '已配置' : '未配置');
+  
   if (!redisUrl || !redisToken) {
     return res.status(500).json({ 
       success: false, 
@@ -25,6 +28,8 @@ module.exports = async (req, res) => {
     // GET 请求 - 获取内容
     if (req.method === 'GET') {
       const { key, section, all } = req.query;
+      
+      console.log('GET 请求:', { key, section, all });
       
       // 获取所有内容
       if (all === 'true') {
@@ -77,6 +82,8 @@ module.exports = async (req, res) => {
       
       const storageKey = section ? `${section}:${key}` : key;
       
+      console.log('获取单个内容:', storageKey);
+      
       const response = await fetch(`${redisUrl}/get/${encodeURIComponent(storageKey)}`, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${redisToken}` }
@@ -87,6 +94,8 @@ module.exports = async (req, res) => {
       }
       
       const data = await response.json();
+      
+      console.log('获取到的数据:', data);
       
       return res.status(200).json({
         success: true,
@@ -115,6 +124,8 @@ module.exports = async (req, res) => {
 
       const { key, content, section } = data;
       
+      console.log('POST 请求:', { key, section, contentLength: content ? content.length : 0 });
+      
       if (!key || content === undefined) {
         return res.status(400).json({ 
           success: false, 
@@ -123,6 +134,8 @@ module.exports = async (req, res) => {
       }
 
       const storageKey = section ? `${section}:${key}` : key;
+      
+      console.log('保存到 Redis:', storageKey);
       
       // 调用 Redis REST API 保存数据
       const response = await fetch(`${redisUrl}/set/${encodeURIComponent(storageKey)}`, {
@@ -137,6 +150,9 @@ module.exports = async (req, res) => {
       if (!response.ok) {
         throw new Error(`Redis API error: ${response.status}`);
       }
+      
+      const result = await response.json();
+      console.log('保存结果:', result);
       
       return res.status(200).json({
         success: true,
@@ -156,4 +172,3 @@ module.exports = async (req, res) => {
     });
   }
 };
-
