@@ -2,23 +2,30 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/**/*.js",
+      "src": "api/upload.js",
       "use": "@vercel/node"
     },
     {
-      "src": "*.{html,css,js}",
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.css",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.js",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1.js"
+      "src": "/api/upload",
+      "dest": "/api/upload.js"
     },
     {
       "src": "/(.*)",
-      "dest": "/$1",
-      "status": 200
+      "dest": "/$1"
     }
   ]
 }
