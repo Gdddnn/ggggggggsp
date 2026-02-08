@@ -366,7 +366,9 @@ body::before {
     line-height: 1.8;
     margin: 0;
     font-family: 'Comic Sans MS', 'Marker Felt', sans-serif;
-    white-space: pre-line;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .about-stats {
@@ -559,7 +561,9 @@ body::before {
     color: var(--text-secondary);
     line-height: 1.6;
     margin: 0;
-    white-space: pre-line;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .timeline-content {
@@ -691,7 +695,9 @@ body::before {
 .exp-bookmark-body {
     color: var(--text-secondary);
     line-height: 1.8;
-    white-space: pre-line;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
     min-height: 100px;
 }
 
@@ -867,7 +873,9 @@ body::before {
     color: var(--text-secondary);
     line-height: 1.8;
     font-size: 0.95rem;
-    white-space: pre-line;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
     min-height: 150px;
     padding: 1rem;
     background: var(--bg-secondary);
@@ -1060,7 +1068,9 @@ body::before {
     color: var(--text-secondary);
     font-size: 0.9rem;
     margin-bottom: 1rem;
-    white-space: pre-line;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .skill-stars {
@@ -1210,7 +1220,9 @@ body::before {
     line-height: 1.6;
     flex-grow: 1;
     font-weight: 500;
-    white-space: pre-line;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .project-tags {
@@ -1294,7 +1306,9 @@ body::before {
     color: var(--text-secondary);
     margin-bottom: 2rem;
     line-height: 1.8;
-    white-space: pre-line;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .contact-links {
