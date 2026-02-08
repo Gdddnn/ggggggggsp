@@ -4,8 +4,20 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
+    // 检查请求大小（限制为500MB）
+    const maxSize = 500 * 1024 * 1024; // 500MB
+    if (request.headers.get('content-length') > maxSize) {
+      return NextResponse.json(
+        { success: false, error: 'File too large (maximum 500MB)' },
+        { status: 413 }
+      );
+    }
+    
     // 使用 multiparty 解析表单数据
-    const form = new multiparty.Form();
+    const form = new multiparty.Form({
+      maxFilesSize: maxSize, // 设置最大文件大小
+      maxFieldsSize: 10 * 1024 * 1024, // 设置最大字段大小
+    });
     
     const [fields, files] = await new Promise((resolve, reject) => {
       form.parse(request, (err, fields, files) => {
@@ -20,6 +32,14 @@ export async function POST(request) {
       return NextResponse.json(
         { success: false, error: 'No file uploaded' },
         { status: 400 }
+      );
+    }
+    
+    // 检查文件大小
+    if (file.size > maxSize) {
+      return NextResponse.json(
+        { success: false, error: 'File too large (maximum 500MB)' },
+        { status: 413 }
       );
     }
 
