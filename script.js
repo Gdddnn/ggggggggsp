@@ -3256,6 +3256,7 @@ function loadProfilePhoto() {
 async function loadAboutData() {
     try {
         const aboutSection = document.getElementById('about');
+        console.log('loadAboutData: aboutSection =', aboutSection ? '存在' : '不存在');
         if (!aboutSection) return;
         
         // 可编辑元素选择器
@@ -3274,6 +3275,7 @@ async function loadAboutData() {
         
         for (const selector of editableSelectors) {
             const elements = aboutSection.querySelectorAll(selector);
+            console.log(`选择器 ${selector} 找到 ${elements.length} 个元素`);
             for (let index = 0; index < elements.length; index++) {
                 const element = elements[index];
                 const key = `${selector.replace('.', '')}_${index}`;
