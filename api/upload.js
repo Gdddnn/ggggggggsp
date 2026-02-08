@@ -1,37 +1,31 @@
-// api/upload.js
-import { put } from '@vercel/blob';
+// api/get-all-files.js
+import { list } from '@vercel/blob';
+import { NextResponse } from 'next/server';
 
-export default async function handler(req, res) {
-  if (req.method === 'POST') {
-    try {
-      // 读取请求体
-      const chunks = [];
-      for await (const chunk of req) {
-        chunks.push(chunk);
-      }
-      const buffer = Buffer.concat(chunks);
+export async function GET() {
+  try {
+    // 列出所有以 public-videos/ 为前缀的文件（即所有上传的公共视频）
+    const { blobs } = await list({
+      prefix: 'public-videos/',
+      token: process.env.BLOB_READ_WRITE_TOKEN
+    });
 
-      // 获取文件名和类型
-      const filename = req.headers['x-filename'] || 'uploaded-file';
-      const contentType = req.headers['content-type'] || 'application/octet-stream';
+    // 格式化返回数据（只保留关键信息）
+    const fileList = blobs.map(blob => ({
+      name: blob.pathname.split('/')[1].replace(/^\d+-/, ''), // 提取原文件名
+      url: blob.url, // 视频访问URL
+      size: blob.size, // 文件大小
+      uploadTime: new Date(blob.uploadedAt).toLocaleString() // 上传时间
+    }));
 
-      // 上传到 Vercel Blob
-      const blob = await put(filename, buffer, {
-        access: 'public',
-        contentType,
-      });
-
-      return res.json({
-        url: blob.url,
-        name: filename,
-        size: buffer.length,
-        type: contentType,
-      });
-    } catch (error) {
-      console.error('Upload error:', error);
-      return res.status(500).json({ error: 'Upload failed' });
-    }
-  } else {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return NextResponse.json({
+      success: true,
+      files: fileList
+    });
+  } catch (error) {
+    return NextResponse.json({
+      success: false,
+      error: error.message
+    }, { status: 500 });
   }
 }
