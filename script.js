@@ -877,7 +877,7 @@ function initLoginSystem() {
                             textarea.addEventListener('input', adjustHeight);
                             
                             // 保存编辑的函数
-                            function saveEdit() {
+                            async function saveEdit() {
                                 const newText = textarea.value;
                                 if (newText.trim() !== '') {
                                     // 清空元素内容
@@ -892,9 +892,26 @@ function initLoginSystem() {
                                         element.appendChild(editButton);
                                     }
                                     
-                                    // 保存到localStorage
-                                    const key = `about_${selector.replace('.', '')}_${index}`;
-                                    localStorage.setItem(key, newText);
+                                    // 保存到服务器
+                                    const key = `${selector.replace('.', '')}_${index}`;
+                                    try {
+                                        await fetch('/api/save-text-content', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json'
+                                            },
+                                            body: JSON.stringify({
+                                                key: key,
+                                                content: newText,
+                                                section: 'about'
+                                            })
+                                        });
+                                        console.log('内容已保存到服务器:', key);
+                                    } catch (error) {
+                                        console.error('保存到服务器失败:', error);
+                                        // 如果服务器保存失败，保存到 localStorage 作为备份
+                                        localStorage.setItem(`about_${key}`, newText);
+                                    }
                                 } else {
                                     // 如果内容为空，恢复原内容
                                     element.innerHTML = '';
@@ -4787,19 +4804,55 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentEditingElement = null;
     let currentTextarea = null;
     
-    // 从localStorage加载保存的文字
-    function loadSavedText(element) {
+    // 从服务器或localStorage加载保存的文字
+    async function loadSavedText(element) {
         const key = 'text_' + element.className + '_' + getElementPath(element);
+        
+        // 尝试从服务器加载
+        try {
+            const response = await fetch(`/api/get-text-content?key=${encodeURIComponent(key)}&section=about`);
+            const data = await response.json();
+            if (data.success && data.content) {
+                element.textContent = data.content;
+                console.log('从服务器加载内容:', key);
+                return;
+            }
+        } catch (error) {
+            console.error('从服务器加载失败:', error);
+        }
+        
+        // 如果服务器加载失败，从 localStorage 加载
         const saved = localStorage.getItem(key);
         if (saved) {
             element.textContent = saved;
+            console.log('从localStorage加载内容:', key);
         }
     }
     
-    // 保存文字到localStorage
-    function saveText(element, text) {
+    // 保存文字到服务器和localStorage
+    async function saveText(element, text) {
         const key = 'text_' + element.className + '_' + getElementPath(element);
+        
+        // 保存到 localStorage 作为备份
         localStorage.setItem(key, text);
+        
+        // 尝试保存到服务器
+        try {
+            await fetch('/api/save-text-content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    key: key,
+                    content: text,
+                    section: 'about'
+                })
+            });
+            console.log('内容已保存到服务器:', key);
+        } catch (error) {
+            console.error('保存到服务器失败:', error);
+        }
     }
     
     // 获取元素路径（用于唯一标识）
@@ -5293,14 +5346,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // 结束编辑
-    function finishEditing() {
+    async function finishEditing() {
         if (!currentEditingElement || !currentTextarea) return;
         
         const newText = currentTextarea.value;
         const element = currentEditingElement;
         
-        // 保存到localStorage
-        saveText(element, newText);
+        // 保存到服务器和localStorage
+        await saveText(element, newText);
         
         // 恢复显示
         element.textContent = newText;
@@ -5313,14 +5366,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // 初始化所有可编辑文字
-    function initEditableText() {
+    async function initEditableText() {
         if (!isLoggedIn) return;
         
-        editableClasses.forEach(className => {
+        for (const className of editableClasses) {
             const elements = document.querySelectorAll('.' + className);
-            elements.forEach((element, index) => {
-                // 加载保存的文字
-                loadSavedText(element);
+            for (let index = 0; index < elements.length; index++) {
+                const element = elements[index];
+                // 加载保存的文字（异步）
+                await loadSavedText(element);
                 
                 // 创建编辑按钮
                 createEditButton(element);
@@ -5332,8 +5386,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         startEditing(element);
                     }
                 });
-            });
-        });
+            }
+        }
     }
     
     // 页面加载完成后初始化
