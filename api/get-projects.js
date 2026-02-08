@@ -1,7 +1,12 @@
-import { NextResponse } from 'next/server';
+// 从 Redis 获取项目数据
+const { createClient } = require('redis');
 
-// 模拟项目数据存储
-let projectData = {
+// Redis 客户端实例
+let redisClient = null;
+let redisConnected = false;
+
+// 默认项目数据
+const defaultProjects = {
   'ai-works': {
     title: 'AI作品合集',
     description: '运用多种AI工具进行创意制作，包括可灵、即梦、豆包、通义、海螺、Sora等。涵盖视频生成、图像创作、文案优化等多个领域。通过AI技术提升创作效率，探索AI与内容创作的创新结合，产出高质量的数字媒体作品。',
@@ -29,16 +34,77 @@ let projectData = {
   }
 };
 
-export async function GET() {
+// 获取 Redis 客户端
+async function getRedisClient() {
+  if (redisClient && redisConnected) {
+    return redisClient;
+  }
+  
+  const redisUrl = process.env.REDIS_URL;
+  if (!redisUrl) {
+    return null;
+  }
+  
   try {
-    return NextResponse.json({
-      success: true,
-      projects: projectData
+    redisClient = createClient({
+      url: redisUrl
     });
+    
+    redisClient.on('error', (err) => {
+      console.error('Redis Client Error:', err);
+      redisConnected = false;
+    });
+    
+    redisClient.on('connect', () => {
+      console.log('Redis Client Connected');
+      redisConnected = true;
+    });
+    
+    await redisClient.connect();
+    return redisClient;
   } catch (error) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
+    console.error('Redis Connection Error:', error);
+    redisConnected = false;
+    return null;
   }
 }
+
+module.exports = async (req, res) => {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
+  }
+
+  try {
+    // 获取 Redis 客户端
+    const client = await getRedisClient();
+    
+    if (client) {
+      // 从 Redis 获取项目数据
+      try {
+        const data = await client.get('projects');
+        if (data) {
+          console.log('从 Redis 获取项目数据成功');
+          return res.status(200).json({
+            success: true,
+            projects: JSON.parse(data)
+          });
+        }
+      } catch (redisError) {
+        console.error('从 Redis 获取项目数据失败:', redisError);
+      }
+    }
+    
+    // 如果 Redis 不可用或没有数据，返回默认数据
+    console.log('返回默认项目数据');
+    return res.status(200).json({
+      success: true,
+      projects: defaultProjects
+    });
+  } catch (error) {
+    console.error('获取项目数据失败:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
