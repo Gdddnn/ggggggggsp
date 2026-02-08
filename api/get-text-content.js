@@ -1,6 +1,4 @@
-// API 端点：从 Vercel KV 获取文本内容
-const { kv } = require('@vercel/kv');
-
+// API 端点：从 Redis 获取文本内容
 module.exports = async (req, res) => {
   // 设置 CORS 头
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -29,15 +27,38 @@ module.exports = async (req, res) => {
     // 构建存储键
     const storageKey = section ? `${section}:${key}` : key;
     
-    // 从 Vercel KV 获取内容
-    const content = await kv.get(storageKey);
+    // 使用 Redis REST API 获取数据
+    const redisUrl = process.env.STORAGE_REST_API_URL;
+    const redisToken = process.env.STORAGE_REST_API_TOKEN;
+    
+    if (!redisUrl || !redisToken) {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Redis configuration not found' 
+      });
+    }
+    
+    // 调用 Redis REST API
+    const response = await fetch(`${redisUrl}/get/${encodeURIComponent(storageKey)}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${redisToken}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Redis API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    const content = data.value || '';
     
     console.log(`文本内容已获取: ${storageKey}`);
     
     return res.status(200).json({
       success: true,
       key: storageKey,
-      content: content || ''
+      content: content
     });
   } catch (error) {
     console.error('获取文本内容失败:', error);
