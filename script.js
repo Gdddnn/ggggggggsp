@@ -2991,41 +2991,64 @@ window.addEventListener('scroll', () => {
 let experiences = [];
 
 // 加载工作经验
-function loadExperiences() {
+async function loadExperiences() {
     try {
-        const saved = localStorage.getItem('experiences');
-        if (saved) {
-            experiences = JSON.parse(saved);
-        } else {
-            // 初始化默认工作经验
-            experiences = [
-                {
-                    date: '2025.05 - 2025.09',
-                    company: '杭州鼎文学校',
-                    position: '内容编导',
-                    description: '负责学校品牌宣传视频的策划与编导，从选题、脚本撰写到拍摄现场调度全流程参与；协调摄像与后期团队，把控成片节奏与风格；产出多条招生宣传片及活动纪实视频，用于官网与社交媒体投放。'
-                },
-                {
-                    date: '2024.09 - 2025.01',
-                    company: '苹果有限公司',
-                    position: '校园大使（用户运营）',
-                    description: '在高校内开展苹果产品体验与用户运营，策划并执行线下体验活动、工作坊；负责校园社群维护与内容输出，收集用户反馈并配合品牌活动落地；协助新品推广与校园渠道拓展。'
-                },
-                {
-                    date: '2024.06 - 2024.09',
-                    company: '漳州市应急管理局',
-                    position: '内容运营',
-                    description: '参与应急科普与政务新媒体内容策划与制作，撰写安全知识、政策解读等推文与短视频脚本；配合防灾减灾宣传节点产出图文与视频内容，提升公众号与短视频账号的传播与互动效果。'
-                },
-                {
-                    date: '2023.03 - 2023.12',
-                    company: '浩静花园（上海）文化有限公司',
-                    position: '新媒体运营',
-                    description: '独立负责公司多平台新媒体账号的日常运营，包括公众号、小红书、抖音等；完成选题策划、文案撰写、图片与短视频拍摄剪辑及发布；通过数据分析优化内容与发布节奏，参与品牌活动与直播策划执行。'
-                }
-            ];
-            saveExperiences();
+        let loadedFromServer = false;
+        
+        // 优先从服务器加载
+        try {
+            const response = await fetch('/api/text-content?key=experiences&section=about');
+            const data = await response.json();
+            if (data.success && data.content) {
+                experiences = JSON.parse(data.content);
+                console.log('从服务器加载工作经验成功');
+                loadedFromServer = true;
+                
+                // 同步到 localStorage
+                localStorage.setItem('experiences', data.content);
+            }
+        } catch (error) {
+            console.error('从服务器加载工作经验失败:', error);
         }
+        
+        // 如果服务器没有数据，从 localStorage 加载
+        if (!loadedFromServer) {
+            const saved = localStorage.getItem('experiences');
+            if (saved) {
+                experiences = JSON.parse(saved);
+                console.log('从 localStorage 加载工作经验成功');
+            } else {
+                // 初始化默认工作经验
+                experiences = [
+                    {
+                        date: '2025.05 - 2025.09',
+                        company: '杭州鼎文学校',
+                        position: '内容编导',
+                        description: '负责学校品牌宣传视频的策划与编导，从选题、脚本撰写到拍摄现场调度全流程参与；协调摄像与后期团队，把控成片节奏与风格；产出多条招生宣传片及活动纪实视频，用于官网与社交媒体投放。'
+                    },
+                    {
+                        date: '2024.09 - 2025.01',
+                        company: '苹果有限公司',
+                        position: '校园大使（用户运营）',
+                        description: '在高校内开展苹果产品体验与用户运营，策划并执行线下体验活动、工作坊；负责校园社群维护与内容输出，收集用户反馈并配合品牌活动落地；协助新品推广与校园渠道拓展。'
+                    },
+                    {
+                        date: '2024.06 - 2024.09',
+                        company: '漳州市应急管理局',
+                        position: '内容运营',
+                        description: '参与应急科普与政务新媒体内容策划与制作，撰写安全知识、政策解读等推文与短视频脚本；配合防灾减灾宣传节点产出图文与视频内容，提升公众号与短视频账号的传播与互动效果。'
+                    },
+                    {
+                        date: '2023.03 - 2023.12',
+                        company: '浩静花园（上海）文化有限公司',
+                        position: '新媒体运营',
+                        description: '独立负责公司多平台新媒体账号的日常运营，包括公众号、小红书、抖音等；完成选题策划、文案撰写、图片与短视频拍摄剪辑及发布；通过数据分析优化内容与发布节奏，参与品牌活动与直播策划执行。'
+                    }
+                ];
+                saveExperiences();
+            }
+        }
+        
         // 按时间排序并渲染
         sortExperiences();
         renderExperiences();
@@ -3035,9 +3058,33 @@ function loadExperiences() {
 }
 
 // 保存工作经验
-function saveExperiences() {
+async function saveExperiences() {
     try {
+        // 保存到 localStorage
         localStorage.setItem('experiences', JSON.stringify(experiences));
+        
+        // 保存到 Redis 服务器
+        try {
+            const response = await fetch('/api/text-content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    key: 'experiences',
+                    content: JSON.stringify(experiences),
+                    section: 'about'
+                })
+            });
+            const result = await response.json();
+            if (result.success) {
+                console.log('工作经验已保存到服务器');
+            } else {
+                console.error('保存工作经验到服务器失败:', result.error);
+            }
+        } catch (error) {
+            console.error('保存工作经验到服务器失败:', error);
+        }
     } catch (error) {
         console.error('保存工作经验失败:', error);
     }
@@ -3234,15 +3281,42 @@ function moveExperienceDown(index) {
 }
 
 // 加载个人照片
-function loadProfilePhoto() {
+async function loadProfilePhoto() {
     try {
-        const savedPhoto = localStorage.getItem('profilePhoto');
-        if (savedPhoto) {
+        let photoData = null;
+        let loadedFromServer = false;
+        
+        // 优先从服务器加载
+        try {
+            const response = await fetch('/api/text-content?key=profilePhoto&section=about');
+            const data = await response.json();
+            if (data.success && data.content) {
+                photoData = data.content;
+                console.log('从服务器加载个人照片成功');
+                loadedFromServer = true;
+                
+                // 同步到 localStorage
+                localStorage.setItem('profilePhoto', photoData);
+            }
+        } catch (error) {
+            console.error('从服务器加载个人照片失败:', error);
+        }
+        
+        // 如果服务器没有数据，从 localStorage 加载
+        if (!loadedFromServer) {
+            photoData = localStorage.getItem('profilePhoto');
+            if (photoData) {
+                console.log('从 localStorage 加载个人照片成功');
+            }
+        }
+        
+        // 显示照片
+        if (photoData) {
             const profilePhoto = document.getElementById('profilePhoto');
             const photoPlaceholder = document.getElementById('photoPlaceholder');
             
             if (profilePhoto && photoPlaceholder) {
-                profilePhoto.src = savedPhoto;
+                profilePhoto.src = photoData;
                 profilePhoto.style.display = 'block';
                 photoPlaceholder.style.display = 'none';
             }
@@ -3330,9 +3404,34 @@ async function loadAboutData() {
 }
 
 // 保存个人照片
-function saveProfilePhoto(photoData) {
+async function saveProfilePhoto(photoData) {
     try {
+        // 保存到 localStorage
         localStorage.setItem('profilePhoto', photoData);
+        
+        // 保存到 Redis 服务器
+        try {
+            const response = await fetch('/api/text-content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    key: 'profilePhoto',
+                    content: photoData,
+                    section: 'about'
+                })
+            });
+            const result = await response.json();
+            if (result.success) {
+                console.log('个人照片已保存到服务器');
+            } else {
+                console.error('保存个人照片到服务器失败:', result.error);
+            }
+        } catch (error) {
+            console.error('保存个人照片到服务器失败:', error);
+        }
+        
         loadProfilePhoto();
         alert('照片上传成功！📷');
     } catch (error) {
@@ -3403,10 +3502,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     
     // 加载工作经验
-    loadExperiences();
+    await loadExperiences();
     
     // 加载个人照片
-    loadProfilePhoto();
+    await loadProfilePhoto();
     
     // 加载关于我页面的保存数据
     await loadAboutData();
