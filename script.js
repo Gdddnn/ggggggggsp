@@ -5401,7 +5401,7 @@ document.addEventListener('DOMContentLoaded', () => {
         newPanel.innerHTML = `
             <h3>${newBookmark.title}</h3>
             <p>${newBookmark.content}</p>
-            <button class="btn btn-primary mt-4" onclick="editBookmarkContent(${newId})")">编辑内容</button>
+            <button class="btn btn-primary mt-4" onclick="editBookmarkContent(${newId})">编辑内容</button>
         `;
         contentContainer.appendChild(newPanel);
         
@@ -5462,7 +5462,7 @@ document.addEventListener('DOMContentLoaded', () => {
         panel.innerHTML = `
             <h3>${bookmark.title}</h3>
             <p>${bookmark.content}</p>
-            <button class="btn btn-primary mt-4" onclick="editBookmarkContent(${bookmarkId})")">编辑内容</button>
+            <button class="btn btn-primary mt-4" onclick="editBookmarkContent(${bookmarkId})">编辑内容</button>
         `;
     };
     
