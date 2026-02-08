@@ -1,6 +1,4 @@
-// API 端点：保存文本内容到 Vercel KV
-const { kv } = require('@vercel/kv');
-
+// API 端点：保存文本内容到 Redis
 module.exports = async (req, res) => {
   // 设置 CORS 头
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -50,8 +48,30 @@ module.exports = async (req, res) => {
     // 构建存储键
     const storageKey = section ? `${section}:${key}` : key;
     
-    // 保存到 Vercel KV
-    await kv.set(storageKey, content);
+    // 使用 Redis REST API 保存数据
+    const redisUrl = process.env.STORAGE_REST_API_URL;
+    const redisToken = process.env.STORAGE_REST_API_TOKEN;
+    
+    if (!redisUrl || !redisToken) {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Redis configuration not found' 
+      });
+    }
+    
+    // 调用 Redis REST API
+    const response = await fetch(`${redisUrl}/set/${encodeURIComponent(storageKey)}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${redisToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ value: content })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Redis API error: ${response.status}`);
+    }
     
     console.log(`文本内容已保存: ${storageKey}`);
     
