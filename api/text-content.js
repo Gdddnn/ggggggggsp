@@ -10,17 +10,29 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
-  // 获取 Redis 配置
-  const redisUrl = process.env.STORAGE_REST_API_URL;
-  const redisToken = process.env.STORAGE_REST_API_TOKEN;
+  // 获取 Redis 配置（支持多种环境变量名称）
+  const redisUrl = process.env.STORAGE_REST_API_URL || 
+                   process.env.KV_REST_API_URL || 
+                   process.env.REDIS_URL;
+  const redisToken = process.env.STORAGE_REST_API_TOKEN || 
+                     process.env.KV_REST_API_TOKEN || 
+                     process.env.REDIS_TOKEN;
   
   console.log('Redis URL:', redisUrl ? '已配置' : '未配置');
   console.log('Redis Token:', redisToken ? '已配置' : '未配置');
+  console.log('环境变量检查:', {
+    STORAGE_REST_API_URL: process.env.STORAGE_REST_API_URL ? '存在' : '不存在',
+    KV_REST_API_URL: process.env.KV_REST_API_URL ? '存在' : '不存在',
+    REDIS_URL: process.env.REDIS_URL ? '存在' : '不存在',
+    STORAGE_REST_API_TOKEN: process.env.STORAGE_REST_API_TOKEN ? '存在' : '不存在',
+    KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN ? '存在' : '不存在',
+    REDIS_TOKEN: process.env.REDIS_TOKEN ? '存在' : '不存在'
+  });
   
   if (!redisUrl || !redisToken) {
     return res.status(500).json({ 
       success: false, 
-      error: 'Redis configuration not found' 
+      error: 'Redis configuration not found. Please check environment variables.' 
     });
   }
 
