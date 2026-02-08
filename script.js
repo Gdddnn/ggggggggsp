@@ -2343,23 +2343,23 @@ async function uploadFiles(files) {
                     progressFill.style.width = fileProgress + '%';
                     progressText.textContent = `上传中... ${index + 1}/${totalFiles} - ${file.name.substring(0, 20)}...`;
                     
-                    // 读取文件为 ArrayBuffer
-                    const reader = new FileReader();
-                    const fileBuffer = await new Promise((resolve, reject) => {
-                        reader.onload = (e) => resolve(e.target.result);
-                        reader.onerror = reject;
-                        reader.readAsArrayBuffer(file);
-                    });
+                   // 读取文件为 ArrayBuffer
+const reader = new FileReader();
+const fileBuffer = await new Promise((resolve, reject) => {
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+});
 
-                    // 调用 API 上传文件
-                    const response = await fetch('/api/upload', {
-                        method: 'POST',
-                        headers: {
-                            'content-type': file.type,
-                            'x-filename': file.name
-                        },
-                        body: fileBuffer,
-                    });
+// 调用 API 上传文件
+const response = await fetch('/api/upload', {
+    method: 'POST',
+    headers: {
+        'content-type': file.type,
+        'x-filename': file.name
+    },
+    body: fileBuffer,
+});
 
                     if (!response.ok) {
                         throw new Error('上传失败');
