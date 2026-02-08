@@ -3625,16 +3625,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // 加载二维码
-    function loadQrCode() {
+    async function loadQrCode() {
         try {
-            const savedQr = localStorage.getItem('qrCode');
-            if (savedQr) {
+            let qrData = null;
+            let loadedFromServer = false;
+            
+            // 优先从服务器加载
+            try {
+                const response = await fetch('/api/text-content?key=qrCode&section=about');
+                const data = await response.json();
+                if (data.success && data.content) {
+                    qrData = data.content;
+                    console.log('从服务器加载二维码成功');
+                    loadedFromServer = true;
+                    
+                    // 同步到 localStorage
+                    localStorage.setItem('qrCode', qrData);
+                }
+            } catch (error) {
+                console.error('从服务器加载二维码失败:', error);
+            }
+            
+            // 如果服务器没有数据，从 localStorage 加载
+            if (!loadedFromServer) {
+                qrData = localStorage.getItem('qrCode');
+                if (qrData) {
+                    console.log('从 localStorage 加载二维码成功');
+                }
+            }
+            
+            // 显示二维码
+            if (qrData) {
                 const qrCode = document.getElementById('qrCode');
                 const qrPlaceholder = document.getElementById('qrPlaceholder');
                 const qrContainer = document.getElementById('qrContainer');
                 
                 if (qrCode && qrPlaceholder && qrContainer) {
-                    qrCode.src = savedQr;
+                    qrCode.src = qrData;
                     qrCode.style.display = 'block';
                     qrPlaceholder.style.display = 'none';
                     
@@ -3668,9 +3695,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // 保存二维码
-    function saveQrCode(qrData) {
+    async function saveQrCode(qrData) {
         try {
+            // 保存到 localStorage
             localStorage.setItem('qrCode', qrData);
+            
+            // 保存到 Redis 服务器
+            try {
+                const response = await fetch('/api/text-content', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        key: 'qrCode',
+                        content: qrData,
+                        section: 'about'
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    console.log('二维码已保存到服务器');
+                } else {
+                    console.error('保存二维码到服务器失败:', result.error);
+                }
+            } catch (error) {
+                console.error('保存二维码到服务器失败:', error);
+            }
+            
             loadQrCode();
             alert('二维码上传成功！📱');
         } catch (error) {
@@ -3680,13 +3732,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // 加载联系文字
-    function loadContactText() {
+    async function loadContactText() {
         try {
-            const savedText = localStorage.getItem('contactText');
+            let textData = null;
+            let loadedFromServer = false;
+            
+            // 优先从服务器加载
+            try {
+                const response = await fetch('/api/text-content?key=contactText&section=about');
+                const data = await response.json();
+                if (data.success && data.content) {
+                    textData = data.content;
+                    console.log('从服务器加载联系文字成功');
+                    loadedFromServer = true;
+                    
+                    // 同步到 localStorage
+                    localStorage.setItem('contactText', textData);
+                }
+            } catch (error) {
+                console.error('从服务器加载联系文字失败:', error);
+            }
+            
+            // 如果服务器没有数据，从 localStorage 加载
+            if (!loadedFromServer) {
+                textData = localStorage.getItem('contactText');
+                if (textData) {
+                    console.log('从 localStorage 加载联系文字成功');
+                }
+            }
+            
+            // 显示联系文字
             const contactText = document.getElementById('contactText');
             if (contactText) {
-                if (savedText) {
-                    contactText.textContent = savedText;
+                if (textData) {
+                    contactText.textContent = textData;
                 } else {
                     // 默认文字
                     const defaultText = '如果你对我的作品感兴趣，或者想要合作，欢迎随时联系我。';
@@ -3700,9 +3779,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // 保存联系文字
-    function saveContactText(text) {
+    async function saveContactText(text) {
         try {
+            // 保存到 localStorage
             localStorage.setItem('contactText', text);
+            
+            // 保存到 Redis 服务器
+            try {
+                const response = await fetch('/api/text-content', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        key: 'contactText',
+                        content: text,
+                        section: 'about'
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    console.log('联系文字已保存到服务器');
+                } else {
+                    console.error('保存联系文字到服务器失败:', result.error);
+                }
+            } catch (error) {
+                console.error('保存联系文字到服务器失败:', error);
+            }
+            
             const contactText = document.getElementById('contactText');
             if (contactText) {
                 contactText.textContent = text;
@@ -3741,8 +3845,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // 加载二维码和联系文字
-    loadQrCode();
-    loadContactText();
+    await loadQrCode();
+    await loadContactText();
     
     // 绑定二维码上传事件
     const qrUpload = document.getElementById('qrUpload');
