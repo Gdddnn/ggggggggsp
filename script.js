@@ -893,7 +893,7 @@ function initLoginSystem() {
                                     }
                                     
                                     // 保存到服务器
-                                    const key = 'text_' + element.className + '_' + getElementPath(element);
+                                    const key = `${selector.replace('.', '')}_${index}`;
                                     try {
                                         await fetch('/api/text-content', {
                                             method: 'POST',
@@ -908,11 +908,11 @@ function initLoginSystem() {
                                         });
                                         console.log('内容已保存到服务器:', key);
                                         // 同时保存到 localStorage 作为备份
-                                        localStorage.setItem(key, newText);
+                                        localStorage.setItem(`about_${key}`, newText);
                                     } catch (error) {
                                         console.error('保存到服务器失败:', error);
                                         // 如果服务器保存失败，保存到 localStorage 作为备份
-                                        localStorage.setItem(key, newText);
+                                        localStorage.setItem(`about_${key}`, newText);
                                     }
                                 } else {
                                     // 如果内容为空，恢复原内容
@@ -3246,7 +3246,7 @@ function loadProfilePhoto() {
 }
 
 // 加载关于我页面的保存数据
-function loadAboutData() {
+async function loadAboutData() {
     try {
         const aboutSection = document.getElementById('about');
         if (!aboutSection) return;
@@ -3265,12 +3265,33 @@ function loadAboutData() {
             '.timeline-description'
         ];
         
-        editableSelectors.forEach(selector => {
+        for (const selector of editableSelectors) {
             const elements = aboutSection.querySelectorAll(selector);
-            elements.forEach((element, index) => {
-                // 从localStorage加载保存的数据
-                const key = `about_${selector.replace('.', '')}_${index}`;
-                const savedText = localStorage.getItem(key);
+            for (let index = 0; index < elements.length; index++) {
+                const element = elements[index];
+                const key = `${selector.replace('.', '')}_${index}`;
+                
+                // 优先从服务器加载
+                let savedText = null;
+                try {
+                    const response = await fetch(`/api/text-content?key=${encodeURIComponent(key)}&section=about`);
+                    const data = await response.json();
+                    if (data.success && data.content) {
+                        savedText = data.content;
+                        console.log('从服务器加载内容:', key);
+                    }
+                } catch (error) {
+                    console.error('从服务器加载失败:', error);
+                }
+                
+                // 如果服务器没有数据，从localStorage加载
+                if (!savedText) {
+                    savedText = localStorage.getItem(`about_${key}`);
+                    if (savedText) {
+                        console.log('从localStorage加载内容:', key);
+                    }
+                }
+                
                 if (savedText) {
                     // 保存编辑按钮
                     const editButton = element.querySelector('.edit-text-btn');
@@ -3287,8 +3308,8 @@ function loadAboutData() {
                         element.appendChild(editButton);
                     }
                 }
-            });
-        });
+            }
+        }
     } catch (error) {
         console.error('加载关于我页面数据失败:', error);
     }
@@ -3360,7 +3381,7 @@ function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.8) {
 }
 
 // 添加页面切换时的特殊效果
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // 为每个页面添加进入动画
     const pages = document.querySelectorAll('.page');
     pages.forEach((page, index) => {
@@ -3374,7 +3395,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProfilePhoto();
     
     // 加载关于我页面的保存数据
-    loadAboutData();
+    await loadAboutData();
     
     // 绑定添加工作经验按钮事件
     const addBtn = document.getElementById('addExperienceBtn');
