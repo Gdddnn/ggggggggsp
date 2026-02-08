@@ -24,6 +24,26 @@
       "dest": "/api/upload.js"
     },
     {
+      "src": "/api/get-all-files",
+      "dest": "/api/get-all-files.js"
+    },
+    {
+      "src": "/api/get-projects",
+      "dest": "/api/get-projects.js"
+    },
+    {
+      "src": "/api/save-projects",
+      "dest": "/api/save-projects.js"
+    },
+    {
+      "src": "/api/get-project-media",
+      "dest": "/api/get-project-media.js"
+    },
+    {
+      "src": "/api/save-project-media",
+      "dest": "/api/save-project-media.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "/$1"
     }

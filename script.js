@@ -1417,31 +1417,73 @@ let projectData = {
         }
 };
 
-// 从localStorage加载项目数据
-function loadProjectData() {
+// 从API加载项目数据
+async function loadProjectData() {
+    try {
+        const response = await fetch('/api/get-projects');
+        const data = await response.json();
+        if (data.success && data.projects) {
+            projectData = data.projects;
+            console.log('从API加载项目数据成功');
+        } else {
+            // API加载失败，使用默认数据并保存到localStorage作为备份
+            saveProjectDataToLocal();
+            console.log('使用默认项目数据并保存到localStorage');
+        }
+    } catch (error) {
+        console.error('加载项目数据失败:', error);
+        // 加载失败，使用默认数据并保存到localStorage作为备份
+        saveProjectDataToLocal();
+    }
+}
+
+// 保存项目数据到API
+async function saveProjectData() {
+    try {
+        const response = await fetch('/api/save-projects', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(projectData)
+        });
+        const data = await response.json();
+        if (data.success) {
+            console.log('项目数据已保存到API');
+            // 同时保存到localStorage作为备份
+            saveProjectDataToLocal();
+        } else {
+            console.error('保存项目数据到API失败:', data.error);
+            // API保存失败，保存到localStorage作为备份
+            saveProjectDataToLocal();
+        }
+    } catch (error) {
+        console.error('保存项目数据失败:', error);
+        // 保存失败，保存到localStorage作为备份
+        saveProjectDataToLocal();
+    }
+}
+
+// 保存项目数据到localStorage作为备份
+function saveProjectDataToLocal() {
+    try {
+        localStorage.setItem('projectData', JSON.stringify(projectData));
+        console.log('项目数据已保存到localStorage作为备份');
+    } catch (error) {
+        console.error('保存项目数据到localStorage失败:', error);
+    }
+}
+
+// 从localStorage加载项目数据作为备份
+function loadProjectDataFromLocal() {
     try {
         const savedData = localStorage.getItem('projectData');
         if (savedData) {
             projectData = JSON.parse(savedData);
-            console.log('从localStorage加载项目数据成功');
-        } else {
-            // 首次加载，保存默认数据到localStorage
-            saveProjectData();
-            console.log('保存默认项目数据到localStorage');
+            console.log('从localStorage加载项目数据作为备份');
         }
     } catch (error) {
-        console.error('加载项目数据失败:', error);
-        // 加载失败，使用默认数据
-    }
-}
-
-// 保存项目数据到localStorage
-function saveProjectData() {
-    try {
-        localStorage.setItem('projectData', JSON.stringify(projectData));
-        console.log('项目数据已保存到localStorage');
-    } catch (error) {
-        console.error('保存项目数据失败:', error);
+        console.error('从localStorage加载项目数据失败:', error);
     }
 }
 
@@ -1490,48 +1532,28 @@ function initDB() {
         });
 }
 
-// 存储每个项目的媒体文件（使用IndexedDB存储大文件，localStorage存储元数据）
+// 存储每个项目的媒体文件（使用API上传到Vercel Blob）
 async function getProjectMedia(projectId) {
     try {
-        // 先尝试从 IndexedDB 读取
-        await initDB();
-        const transaction = db.transaction([STORE_NAME], 'readonly');
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.get(projectId);
-        
-        return new Promise((resolve) => {
-            request.onsuccess = () => {
-                if (request.result && request.result.mediaArray) {
-                    console.log(`从 IndexedDB 读取项目 ${projectId}，共 ${request.result.mediaArray.length} 个文件`);
-                    resolve(request.result.mediaArray);
-                } else {
-                    // 回退到 localStorage（兼容旧数据）
-                    try {
-                        const stored = localStorage.getItem(`project_media_${projectId}`);
-                        const result = stored ? JSON.parse(stored) : [];
-                        console.log(`从 localStorage 读取项目 ${projectId}，共 ${result.length} 个文件`);
-                        resolve(result);
-                    } catch (error) {
-                        console.error('读取媒体数据失败:', error);
-                        resolve([]);
-                    }
-                }
-            };
-            
-            request.onerror = () => {
-                // 回退到 localStorage
-                try {
-                    const stored = localStorage.getItem(`project_media_${projectId}`);
-                    const result = stored ? JSON.parse(stored) : [];
-                    resolve(result);
-                } catch (error) {
-                    console.error('读取媒体数据失败:', error);
-                    resolve([]);
-                }
-            };
-        });
+        const response = await fetch(`/api/get-project-media?projectId=${projectId}`);
+        const data = await response.json();
+        if (data.success && data.mediaArray) {
+            console.log(`从API读取项目 ${projectId}，共 ${data.mediaArray.length} 个文件`);
+            return data.mediaArray;
+        } else {
+            // API读取失败，回退到localStorage（兼容旧数据）
+            try {
+                const stored = localStorage.getItem(`project_media_${projectId}`);
+                const result = stored ? JSON.parse(stored) : [];
+                console.log(`从localStorage读取项目 ${projectId}，共 ${result.length} 个文件`);
+                return result;
+            } catch (error) {
+                console.error('读取媒体数据失败:', error);
+                return [];
+            }
+        }
     } catch (error) {
-        console.error('IndexedDB 读取失败，回退到 localStorage:', error);
+        console.error('API读取失败，回退到localStorage:', error);
         try {
             const stored = localStorage.getItem(`project_media_${projectId}`);
             return stored ? JSON.parse(stored) : [];
@@ -1544,76 +1566,76 @@ async function getProjectMedia(projectId) {
 
 async function saveProjectMedia(projectId, mediaArray) {
     try {
-        // 计算总大小
-        let totalSize = 0;
-        mediaArray.forEach(media => {
-            if (media.url) {
-                totalSize += media.url.length;
+        // 上传每个媒体文件到Vercel Blob
+        const uploadedMediaArray = [];
+        for (const media of mediaArray) {
+            if (media.file) {
+                // 上传文件到API
+                const formData = new FormData();
+                formData.append('file', media.file);
+                formData.append('projectId', projectId);
+                
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const uploadData = await response.json();
+                if (uploadData.success) {
+                    uploadedMediaArray.push({
+                        type: media.type,
+                        name: uploadData.name,
+                        mimeType: media.mimeType,
+                        size: uploadData.size,
+                        url: uploadData.url,
+                        uploadTime: media.uploadTime
+                    });
+                }
+            } else {
+                // 已经是URL的文件，直接添加
+                uploadedMediaArray.push(media);
             }
+        }
+        
+        // 保存媒体文件列表到API
+        const response = await fetch('/api/save-project-media', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                projectId: projectId,
+                mediaArray: uploadedMediaArray
+            })
         });
         
-        // 如果数据较大（>5MB），使用 IndexedDB
-        if (totalSize > 5 * 1024 * 1024) {
-            await initDB();
-            const transaction = db.transaction([STORE_NAME], 'readwrite');
-            const store = transaction.objectStore(STORE_NAME);
-            const data = {
-                projectId: projectId,
-                mediaArray: mediaArray,
-                updatedAt: new Date().toISOString()
-            };
-            
-            return new Promise((resolve) => {
-                const request = store.put(data);
-                request.onsuccess = () => {
-                    console.log(`项目 ${projectId} 的媒体数据已保存到 IndexedDB，共 ${mediaArray.length} 个文件，总大小: ${(totalSize / 1024 / 1024).toFixed(2)}MB`);
-                    resolve(true);
-                };
-                request.onerror = () => {
-                    console.error('IndexedDB 保存失败，回退到 localStorage:', request.error);
-                    // 回退到 localStorage（只保存元数据，不保存大文件）
-                    try {
-                        const metadata = mediaArray.map(m => ({
-                            type: m.type,
-                            name: m.name,
-                            mimeType: m.mimeType,
-                            size: m.size,
-                            uploadTime: m.uploadTime,
-                            // 不保存完整的 base64 URL，只保存引用
-                            url: m.url ? m.url.substring(0, 100) + '...' : ''
-                        }));
-                        localStorage.setItem(`project_media_${projectId}`, JSON.stringify(metadata));
-                        console.warn('数据过大，已保存元数据到 localStorage，但完整数据可能丢失');
-                        resolve(false);
-                    } catch (e) {
-                        console.error('保存失败:', e);
-                        resolve(false);
-                    }
-                };
-            });
-        } else {
-            // 小数据使用 localStorage
-            const dataString = JSON.stringify(mediaArray);
-            localStorage.setItem(`project_media_${projectId}`, dataString);
-            console.log(`项目 ${projectId} 的媒体数据已保存到 localStorage，共 ${mediaArray.length} 个文件`);
+        const data = await response.json();
+        if (data.success) {
+            console.log(`项目 ${projectId} 的媒体数据已保存到API，共 ${uploadedMediaArray.length} 个文件`);
+            // 同时保存到localStorage作为备份
+            saveProjectMediaToLocal(projectId, uploadedMediaArray);
             return true;
+        } else {
+            console.error('保存媒体数据到API失败:', data.error);
+            // API保存失败，保存到localStorage作为备份
+            saveProjectMediaToLocal(projectId, uploadedMediaArray);
+            return false;
         }
     } catch (error) {
         console.error('保存媒体数据失败:', error);
-        // 尝试保存到 localStorage 作为备份
-        try {
-            const metadata = mediaArray.map(m => ({
-                type: m.type,
-                name: m.name,
-                mimeType: m.mimeType,
-                size: m.size,
-                uploadTime: m.uploadTime
-            }));
-            localStorage.setItem(`project_media_${projectId}`, JSON.stringify(metadata));
-            return false;
-        } catch (e) {
-            return false;
-        }
+        // 保存失败，保存到localStorage作为备份
+        saveProjectMediaToLocal(projectId, mediaArray);
+        return false;
+    }
+}
+
+// 保存媒体数据到localStorage作为备份
+function saveProjectMediaToLocal(projectId, mediaArray) {
+    try {
+        localStorage.setItem(`project_media_${projectId}`, JSON.stringify(mediaArray));
+        console.log(`项目 ${projectId} 的媒体数据已保存到localStorage作为备份`);
+    } catch (error) {
+        console.error('保存媒体数据到localStorage失败:', error);
     }
 }
 
