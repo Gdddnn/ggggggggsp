@@ -2,26 +2,6 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/upload.js",
-      "use": "@vercel/edge"
-    },
-    {
-      "src": "api/get-upload-url.js",
-      "use": "@vercel/edge"
-    },
-    {
-      "src": "api/upload-chunk.js",
-      "use": "@vercel/edge"
-    },
-    {
-      "src": "api/simple-upload.js",
-      "use": "@vercel/edge"
-    },
-    {
-      "src": "api/edge-upload.js",
-      "use": "@vercel/edge"
-    },
-    {
       "src": "*.html",
       "use": "@vercel/static"
     },
@@ -32,6 +12,10 @@
     {
       "src": "*.js",
       "use": "@vercel/static"
+    },
+    {
+      "src": "api/*.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
