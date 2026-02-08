@@ -5475,7 +5475,7 @@ document.addEventListener('DOMContentLoaded', () => {
         panel.innerHTML = `
             <h3>${bookmark.title}</h3>
             <p>${bookmark.content}</p>
-            <button class="btn btn-primary mt-4" onclick="editBookmarkContent(${bookmarkId})")">编辑内容</button>
+            <button class="btn btn-primary mt-4" onclick="editBookmarkContent(${bookmarkId})">编辑内容</button>
         `;
     };
     
