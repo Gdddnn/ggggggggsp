@@ -2335,7 +2335,7 @@ async function uploadFiles(files) {
                 continue;
             }
             
-            // 处理文件上传到 Vercel Blob
+            // 处理文件上传
             await (async () => {
                 try {
                     // 更新进度：开始处理文件
@@ -2343,14 +2343,22 @@ async function uploadFiles(files) {
                     progressFill.style.width = fileProgress + '%';
                     progressText.textContent = `上传中... ${index + 1}/${totalFiles} - ${file.name.substring(0, 20)}...`;
                     
-                    // 创建 FormData 并添加文件
-                    const formData = new FormData();
-                    formData.append('file', file);
+                    // 读取文件为 ArrayBuffer
+                    const reader = new FileReader();
+                    const fileBuffer = await new Promise((resolve, reject) => {
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.onerror = reject;
+                        reader.readAsArrayBuffer(file);
+                    });
 
                     // 调用 API 上传文件
                     const response = await fetch('/api/upload', {
                         method: 'POST',
-                        body: formData,
+                        headers: {
+                            'content-type': file.type,
+                            'x-filename': file.name
+                        },
+                        body: fileBuffer,
                     });
 
                     if (!response.ok) {
