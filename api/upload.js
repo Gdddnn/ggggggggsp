@@ -4,38 +4,28 @@ import { put } from '@vercel/blob';
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
-      // 检查是否是 FormData 请求
-      if (!req.headers['content-type']?.includes('multipart/form-data')) {
-        return res.status(400).json({ error: 'Invalid content type' });
+      // 读取请求体
+      const chunks = [];
+      for await (const chunk of req) {
+        chunks.push(chunk);
       }
+      const buffer = Buffer.concat(chunks);
 
-      // 使用 FormData 解析
-      const formData = await req.formData();
-      const file = formData.get('file');
-
-      if (!file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-
-      // 读取文件为 ArrayBuffer
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      console.log('Uploading file:', file.name, file.type, buffer.length);
+      // 获取文件名和类型
+      const filename = req.headers['x-filename'] || 'uploaded-file';
+      const contentType = req.headers['content-type'] || 'application/octet-stream';
 
       // 上传到 Vercel Blob
-      const blob = await put(file.name, buffer, {
+      const blob = await put(filename, buffer, {
         access: 'public',
-        contentType: file.type,
+        contentType,
       });
-
-      console.log('Upload successful:', blob.url);
 
       return res.json({
         url: blob.url,
-        name: file.name,
+        name: filename,
         size: buffer.length,
-        type: file.type,
+        type: contentType,
       });
     } catch (error) {
       console.error('Upload error:', error);
