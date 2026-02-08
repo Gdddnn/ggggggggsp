@@ -17,6 +17,70 @@ let projectMediaData = {
       url: 'https://6qm3brhgv3zzrlyz.public.blob.vercel-storage.com/ai1.mp4',
       uploadTime: new Date().toISOString()
     }
+  ],
+  'danmei': [
+    {
+      type: 'video',
+      name: 'danmei1.mp4',
+      mimeType: 'video/mp4',
+      size: 0,
+      url: 'https://6qm3brhgv3zzrlyz.public.blob.vercel-storage.com/danmei1.mp4',
+      uploadTime: new Date().toISOString()
+    },
+    {
+      type: 'video',
+      name: 'danmei2.mp4',
+      mimeType: 'video/mp4',
+      size: 0,
+      url: 'https://6qm3brhgv3zzrlyz.public.blob.vercel-storage.com/danmei2.mp4',
+      uploadTime: new Date().toISOString()
+    },
+    {
+      type: 'video',
+      name: 'DANMEI3.mp4',
+      mimeType: 'video/mp4',
+      size: 0,
+      url: 'https://6qm3brhgv3zzrlyz.public.blob.vercel-storage.com/DANMEI3.mp4',
+      uploadTime: new Date().toISOString()
+    }
+  ],
+  'wansheng': [
+    {
+      type: 'video',
+      name: 'WANWUSHENG.mp4',
+      mimeType: 'video/mp4',
+      size: 0,
+      url: 'https://6qm3brhgv3zzrlyz.public.blob.vercel-storage.com/WANWUSHENG.mp4',
+      uploadTime: new Date().toISOString()
+    }
+  ],
+  'guoshu': [
+    {
+      type: 'image',
+      name: '微信图片_20260207040335_7_5392.png',
+      mimeType: 'image/png',
+      size: 0,
+      url: 'https://6qm3brhgv3zzrlyz.public.blob.vercel-storage.com/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20260207040335_7_5392.png',
+      uploadTime: new Date().toISOString()
+    },
+    {
+      type: 'image',
+      name: '微信图片_20260207040830_382_2.png',
+      mimeType: 'image/png',
+      size: 0,
+      url: 'https://6qm3brhgv3zzrlyz.public.blob.vercel-storage.com/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20260207040830_382_2.png',
+      uploadTime: new Date().toISOString()
+    }
+  ],
+  'professor': [
+    {
+      type: 'image',
+      name: '微信图片_20260207041725_385_2.png',
+      mimeType: 'image/png',
+      size: 0,
+      url: 'https://6qm3brhgv3zzrlyz.public.blob.vercel-storage.com/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20260207041725_385_2.png',
+      uploadTime: new Date().toISOString()
+    }
   ]
 };
 
