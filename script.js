@@ -5188,19 +5188,55 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentEditingElement = null;
     let currentTextarea = null;
     
-    // 从localStorage加载保存的文字
-    function loadSavedText(element) {
+    // 从服务器或localStorage加载保存的文字
+    async function loadSavedText(element) {
         const key = 'text_' + element.className + '_' + getElementPath(element);
+        
+        // 尝试从服务器加载
+        try {
+            const response = await fetch(`/api/text-content?key=${encodeURIComponent(key)}&section=about`);
+            const data = await response.json();
+            if (data.success && data.content) {
+                element.textContent = data.content;
+                console.log('从服务器加载内容:', key);
+                return;
+            }
+        } catch (error) {
+            console.error('从服务器加载失败:', error);
+        }
+        
+        // 如果服务器加载失败，从 localStorage 加载
         const saved = localStorage.getItem(key);
         if (saved) {
             element.textContent = saved;
+            console.log('从localStorage加载内容:', key);
         }
     }
     
-    // 保存文字到localStorage
-    function saveText(element, text) {
+    // 保存文字到服务器和localStorage
+    async function saveText(element, text) {
         const key = 'text_' + element.className + '_' + getElementPath(element);
+        
+        // 保存到 localStorage 作为备份
         localStorage.setItem(key, text);
+        
+        // 尝试保存到服务器
+        try {
+            await fetch('/api/text-content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    key: key,
+                    content: text,
+                    section: 'about'
+                })
+            });
+            console.log('内容已保存到服务器:', key);
+        } catch (error) {
+            console.error('保存到服务器失败:', error);
+        }
     }
     
     // 获取元素路径（用于唯一标识）
