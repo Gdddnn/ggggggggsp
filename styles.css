@@ -2317,7 +2317,7 @@ body::before {
     padding: 2rem;
     box-shadow: 4px 4px 20px rgba(0, 0, 0, 0.15);
     position: relative;
-    overflow: visible;
+    overflow: hidden;
     z-index: 100;
     transition: min-height 0.3s ease;
 }
@@ -2335,6 +2335,7 @@ body::before {
     padding: 2rem;
     z-index: 1;
     box-sizing: border-box;
+    max-width: 100%;
 }
 
 .bookmark-panel.active {
@@ -2356,7 +2357,9 @@ body::before {
     margin: 0 0 1rem 0;
     line-height: 1.6;
     color: var(--text-secondary);
-    white-space: pre-line;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 /* 编辑模式 */
