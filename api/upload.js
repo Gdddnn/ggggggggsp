@@ -1,31 +1,51 @@
-// api/get-all-files.js
-import { list } from '@vercel/blob';
+import multiparty from 'multiparty';
+import { put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function POST(request) {
   try {
-    // 列出所有以 public-videos/ 为前缀的文件（即所有上传的公共视频）
-    const { blobs } = await list({
-      prefix: 'public-videos/',
+    // 使用 multiparty 解析表单数据
+    const form = new multiparty.Form();
+    
+    const [fields, files] = await new Promise((resolve, reject) => {
+      form.parse(request, (err, fields, files) => {
+        if (err) reject(err);
+        else resolve([fields, files]);
+      });
+    });
+
+    // 获取上传的文件
+    const file = files.file?.[0];
+    if (!file) {
+      return NextResponse.json(
+        { success: false, error: 'No file uploaded' },
+        { status: 400 }
+      );
+    }
+
+    // 生成唯一文件名（添加时间戳防止重复）
+    const timestamp = Date.now();
+    const fileName = `${timestamp}-${file.originalFilename}`;
+    const filePath = `public-videos/${fileName}`;
+
+    // 上传到 Vercel Blob
+    const { url } = await put(filePath, file.path, {
+      access: 'public',
       token: process.env.BLOB_READ_WRITE_TOKEN
     });
 
-    // 格式化返回数据（只保留关键信息）
-    const fileList = blobs.map(blob => ({
-      name: blob.pathname.split('/')[1].replace(/^\d+-/, ''), // 提取原文件名
-      url: blob.url, // 视频访问URL
-      size: blob.size, // 文件大小
-      uploadTime: new Date(blob.uploadedAt).toLocaleString() // 上传时间
-    }));
-
+    // 返回成功响应
     return NextResponse.json({
       success: true,
-      files: fileList
+      name: fileName,
+      url: url,
+      size: file.size
     });
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      error: error.message
-    }, { status: 500 });
+    console.error('Upload error:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
 }
