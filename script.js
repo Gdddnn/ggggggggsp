@@ -4637,9 +4637,13 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         
-        // 自动调整高度
+        // 自动调整高度（只设置一次，避免无限增长）
         const textarea = document.getElementById(`expBookmarkEditText-${expIndex}`);
-        textarea.style.height = textarea.scrollHeight + 'px';
+        const maxHeight = 300; // 最大高度限制
+        const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+        textarea.style.height = newHeight + 'px';
+        textarea.style.maxHeight = maxHeight + 'px';
+        textarea.style.overflowY = 'auto';
         textarea.focus();
     }
     
@@ -4970,9 +4974,13 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         
-        // 自动调整高度
+        // 自动调整高度（只设置一次，避免无限增长）
         const textarea = document.getElementById('bookmarkEditContent');
-        textarea.style.height = textarea.scrollHeight + 'px';
+        const maxHeight = 400; // 最大高度限制
+        const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+        textarea.style.height = newHeight + 'px';
+        textarea.style.maxHeight = maxHeight + 'px';
+        textarea.style.overflowY = 'auto';
         textarea.focus();
     }
     
@@ -5173,11 +5181,15 @@ document.addEventListener('DOMContentLoaded', () => {
         textarea.select();
         currentTextarea = textarea;
         
-        // 自动调整高度
+        // 自动调整高度（添加最大高度限制，避免无限增长）
+        const maxHeight = 300; // 最大高度限制
         function adjustHeight() {
             textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
+            const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+            textarea.style.height = newHeight + 'px';
         }
+        textarea.style.maxHeight = maxHeight + 'px';
+        textarea.style.overflowY = 'auto';
         adjustHeight();
         textarea.addEventListener('input', adjustHeight);
         
@@ -5443,9 +5455,13 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         
-        // 自动调整高度
+        // 自动调整高度（只设置一次，避免无限增长）
         const textarea = document.getElementById(`bookmarkEditText-${bookmarkId}`);
-        textarea.style.height = textarea.scrollHeight + 'px';
+        const maxHeight = 400; // 最大高度限制
+        const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+        textarea.style.height = newHeight + 'px';
+        textarea.style.maxHeight = maxHeight + 'px';
+        textarea.style.overflowY = 'auto';
         textarea.focus();
     };
     
