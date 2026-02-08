@@ -60,6 +60,10 @@
       "dest": "/api/save-project-media.js"
     },
     {
+      "src": "/api/text-content",
+      "dest": "/api/text-content.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "/$1"
     }
